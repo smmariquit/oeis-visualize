@@ -4,11 +4,12 @@ import {
   Text,
   StyleSheet,
   Pressable,
-  Dimensions,
+  useWindowDimensions,
 } from "react-native";
 import { router } from "expo-router";
 import type { OEISSequence } from "../sequences/types";
 import { colors } from "../theme";
+import ErrorBoundary from "./ErrorBoundary";
 import {
   RecamanArcs,
   FibonacciSpiral,
@@ -18,8 +19,6 @@ import {
   DigitFlow,
 } from "../visualizations";
 
-const SCREEN_W = Dimensions.get("window").width;
-const CARD_W = SCREEN_W - 32;
 const PREVIEW_H = 180;
 
 function VizPreview({ vizType, width, height }: { vizType: string; width: number; height: number }) {
@@ -47,6 +46,9 @@ interface Props {
 }
 
 export default function SequenceCard({ sequence, index }: Props) {
+  const { width: screenW } = useWindowDimensions();
+  const cardW = Math.min(screenW - 32, 600);
+
   const handlePress = useCallback(() => {
     router.push(`/visualize/${sequence.id}`);
   }, [sequence.id]);
@@ -56,11 +58,14 @@ export default function SequenceCard({ sequence, index }: Props) {
       onPress={handlePress}
       style={({ pressed }) => [
         styles.card,
+        { width: cardW, alignSelf: "center" as const },
         pressed && styles.cardPressed,
       ]}
     >
-      <View style={styles.previewContainer}>
-        <VizPreview vizType={sequence.vizType} width={CARD_W} height={PREVIEW_H} />
+      <View style={[styles.previewContainer, { width: cardW }]}>
+        <ErrorBoundary fallbackText={`Preview: ${sequence.name}`}>
+          <VizPreview vizType={sequence.vizType} width={cardW} height={PREVIEW_H} />
+        </ErrorBoundary>
         <View style={styles.previewOverlay} />
       </View>
       <View style={styles.info}>
@@ -82,7 +87,6 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.bgCard,
     borderRadius: 20,
-    marginHorizontal: 16,
     marginBottom: 20,
     overflow: "hidden",
     borderWidth: 1,
@@ -93,7 +97,6 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.98 }],
   },
   previewContainer: {
-    width: CARD_W,
     height: PREVIEW_H,
     backgroundColor: colors.bg,
     overflow: "hidden",

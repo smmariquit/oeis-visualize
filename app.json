@@ -25,6 +25,12 @@
       "bundleIdentifier": "com.sequencetrip.app",
       "supportsTablet": true
     },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro",
+      "output": "single",
+      "backgroundColor": "#07060E"
+    },
     "plugins": [
       "expo-router",
       "expo-font",

@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { View, StyleSheet, Dimensions, Text } from "react-native";
+import { View, StyleSheet, useWindowDimensions, Text } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { getSequence } from "../../src/sequences/catalog";
 import Controls from "../../src/components/Controls";
@@ -13,22 +13,20 @@ import {
   DigitFlow,
 } from "../../src/visualizations";
 
-const { width: W, height: H } = Dimensions.get("window");
-
-function FullViz({ vizType }: { vizType: string }) {
+function FullViz({ vizType, width, height }: { vizType: string; width: number; height: number }) {
   switch (vizType) {
     case "recaman-arcs":
-      return <RecamanArcs width={W} height={H} count={80} />;
+      return <RecamanArcs width={width} height={height} count={80} />;
     case "fibonacci-spiral":
-      return <FibonacciSpiral width={W} height={H} count={500} />;
+      return <FibonacciSpiral width={width} height={height} count={500} />;
     case "ulam-spiral":
-      return <UlamSpiral width={W} height={H} count={3000} />;
+      return <UlamSpiral width={width} height={height} count={3000} />;
     case "collatz-tree":
-      return <CollatzTree width={W} height={H} count={60} />;
+      return <CollatzTree width={width} height={height} count={60} />;
     case "pascal-fractal":
-      return <PascalFractal width={W} height={H} count={160} />;
+      return <PascalFractal width={width} height={height} count={160} />;
     case "digit-flow":
-      return <DigitFlow width={W} height={H} count={500} />;
+      return <DigitFlow width={width} height={height} count={500} />;
     default:
       return (
         <View style={styles.errorContainer}>
@@ -40,6 +38,7 @@ function FullViz({ vizType }: { vizType: string }) {
 
 export default function VisualizeScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { width: W, height: H } = useWindowDimensions();
   const seq = useMemo(() => getSequence(id ?? ""), [id]);
 
   if (!seq) {
@@ -52,7 +51,7 @@ export default function VisualizeScreen() {
 
   return (
     <View style={styles.container}>
-      <FullViz vizType={seq.vizType} />
+      <FullViz vizType={seq.vizType} width={W} height={H} />
       <Controls title={seq.name} oeis={seq.oeis} />
     </View>
   );
