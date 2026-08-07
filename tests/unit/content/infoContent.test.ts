@@ -53,7 +53,7 @@ describe("infoContent", () => {
       true,
     );
     expect(article?.sections.some((s) => s.image)).toBe(true);
-    expect(article?.citations).toHaveLength(4);
+    expect(article?.citations).toHaveLength(6);
     expect(article?.citations?.some((c) => /Sigler/.test(c))).toBe(true);
     expect(article?.citations?.some((c) => /Concrete Mathematics/.test(c))).toBe(true);
     expect(article?.citations?.some((c) => /Livio/.test(c))).toBe(true);
@@ -69,7 +69,11 @@ describe("infoContent", () => {
       "primes",
     ]) {
       const article = getArticle(id);
-      expect(article?.sections).toHaveLength(4);
+      expect(article?.sections.length).toBeGreaterThanOrEqual(4);
+    }
+    // the expanded tour chapters keep the applied + open-problem sections
+    for (const id of ["catalan", "partitions", "primes"]) {
+      const article = getArticle(id);
       expect(
         article?.sections.some(
           (section) => section.title === "In the real world",
@@ -81,6 +85,40 @@ describe("infoContent", () => {
       expect(article?.sections.some((section) => section.links?.length)).toBe(
         true,
       );
+    }
+  });
+
+  it("gives the expanded Learn articles book-length, cited treatment", () => {
+    for (const id of [
+      "getting-started",
+      "oeis-guide",
+      "famous",
+      "app-manual",
+      "simple-mysteries",
+      "digits-and-bases",
+      "seeing",
+      "hearing",
+      "deep-end",
+    ]) {
+      const article = getArticle(id);
+      expect(article?.citations?.length).toBeGreaterThanOrEqual(3);
+      // inline [n] markers must all point at a real citation
+      const prose = (article?.sections ?? [])
+        .flatMap((s) => [
+          s.title ?? "",
+          ...(s.body ?? []),
+          ...(s.bullets ?? []),
+          s.image?.caption ?? "",
+          s.quote ? `${s.quote.text} ${s.quote.attribution}` : "",
+        ])
+        .join(" ");
+      for (const marker of prose.match(/\[(\d+)\]/g) ?? []) {
+        const n = Number(marker.slice(1, -1));
+        expect(n).toBeGreaterThanOrEqual(1);
+        expect(n).toBeLessThanOrEqual(article?.citations?.length ?? 0);
+      }
+      const words = prose.split(/\s+/).filter(Boolean).length;
+      expect(words).toBeGreaterThan(1800);
     }
   });
 
