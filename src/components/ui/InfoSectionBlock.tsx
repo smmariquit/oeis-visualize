@@ -6,6 +6,7 @@ import { useThemeColors } from "../../theme";
 import type { InfoSection } from "../../content/infoContent";
 import { containsLatexDelimiters } from "../../math/latexDelimiters";
 import MathText from "../MathText";
+import WikiFigureView from "../wiki/WikiFigureView";
 import SectionHeading from "./SectionHeading";
 import BodyText from "./BodyText";
 import BulletRow from "./BulletRow";
@@ -57,6 +58,7 @@ export default function InfoSectionBlock({ section }: Props) {
           </BodyText>
         )
       )}
+      {section.figure ? <WikiFigureView figure={section.figure} /> : null}
       {section.quote ? (
         <View style={styles.quote}>
           <Text style={styles.quoteText}>{section.quote.text}</Text>

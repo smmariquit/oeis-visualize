@@ -43,6 +43,16 @@ export interface PullQuote {
   attribution: string;
 }
 
+/**
+ * Inline interactive/graphic figure. `kind` picks a drawing from
+ * WikiFigureView's catalog; `params` shapes are documented there.
+ */
+export interface WikiFigure {
+  kind: string;
+  params?: Record<string, any>;
+  caption: string;
+}
+
 export interface InfoSection {
   id: string;
   /** Omitted for book-flow chapters whose prose runs without subheadings. */
@@ -54,6 +64,7 @@ export interface InfoSection {
   anums?: string[];
   image?: WikiImage;
   quote?: PullQuote;
+  figure?: WikiFigure;
 }
 
 export interface WikiArticle {

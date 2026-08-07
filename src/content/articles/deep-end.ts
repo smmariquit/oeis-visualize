@@ -10,9 +10,26 @@ export const article: WikiArticle = {
       id: "deep-next",
       body: [
         "If the earlier articles did their job, you have watched hailstone numbers spike, heard Fibonacci loop, and sat with a few questions nobody can answer. This last article is a map of what lies past the app: what to read, which university topics touch this material, how the OEIS accepts new knowledge, and how working mathematicians actually chip away at open problems.",
-        "First, the single most useful research habit this subject offers, stated plainly: whenever any piece of work hands you a sequence of integers, compute the first eight or ten terms and search the OEIS before proving anything. A hit hands you formulas, references, and decades of prior art; a miss on an interesting sequence is an invitation to contribute. The OEIS is not a curiosity cabinet, it is a working instrument, and lookup-before-labor is how thousands of published papers have found their key lemma. For stubborn cases there is even Superseeker, a server that applies dozens of transformations to your terms and searches for the transformed versions too.",
-        "The habit is as old as the database, because the database exists precisely because its founder needed it. In 1964 Neil Sloane, then a graduate student studying how information percolates through random tree networks, computed the sequence 0, 1, 8, 78, 944, ... and could not identify it or its growth rate anywhere in the literature [5]. The lookup tool he wanted did not exist, so he started building it, on punched cards. That sequence sits in the database today as A000435, flagged as the one that started it all, and its entry now carries exactly what young Sloane was missing: a formula, an asymptotic, references, and code. Sixty years of mathematicians hitting the same wall, and one of them decided the wall should be a door.",
       ],
+    },
+    {
+      id: "deep-lookup",
+      title: "Look it up first",
+      body: [
+        "First, the single most useful research habit this subject offers, stated plainly: whenever any piece of work hands you a sequence of integers, compute the first eight or ten terms and search the OEIS before proving anything. A hit hands you formulas, references, and decades of prior art; a miss on an interesting sequence is an invitation to contribute. The OEIS is not a curiosity cabinet, it is a working instrument, and lookup-before-labor is how thousands of published papers have found their key lemma. For stubborn cases there is even Superseeker, a server that applies dozens of transformations to your terms and searches for the transformed versions too.",
+        "The habit is as old as the database, because the database exists precisely because its founder needed it. In 1964 Neil Sloane, then a graduate student studying how information percolates through random tree networks, computed the sequence 0, 1, 8, 78, 944, ... and could not identify it or its growth rate anywhere in the literature [5]. The lookup tool he wanted did not exist, so he started building it, on punched cards.",
+        "That sequence sits in the database today as A000435, flagged as the one that started it all, and its entry now carries exactly what young Sloane was missing: a formula, an asymptotic, references, and code. Sixty years of mathematicians hitting the same wall, and one of them decided the wall should be a door.",
+      ],
+      figure: {
+        kind: "term-plot",
+        params: {
+          terms: [0, 1, 8, 78, 944, 13800, 237432, 4708144, 105822432, 2660215680],
+          label: "A000435, where the OEIS began",
+        },
+        caption:
+          "The ten terms that started the OEIS: even on this log scale Sloane's 1964 tree sequence bends upward, the faster-than-exponential growth he could not find in any book.",
+      },
+      anums: ["A000435"],
       links: [
         { label: "Superseeker (deep search)", url: "https://oeis.org/ol.html" },
       ],

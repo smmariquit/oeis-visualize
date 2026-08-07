@@ -15,22 +15,39 @@ export const article: WikiArticle = {
         "One warning about a near neighbor. Counting the ways to split the set {1, 2, 3, 4, 5} into groups, where the elements are distinguishable individuals rather than identical units, gives the Bell numbers, a different and faster-growing sequence. Compare all three in the app and you can watch how much the identity of the pieces matters.",
       ],
       anums: ["A000041", "A000009", "A000110"],
+      figure: {
+        kind: "term-plot",
+        params: {
+          terms: [1, 1, 2, 3, 5, 7, 11, 15, 22, 30, 42, 56, 77, 101, 135, 176, 231, 297, 385, 490, 627, 792, 1002, 1255, 1575, 1958, 2436, 3010, 3718, 4565, 5604, 6842, 8349, 10143, 12310, 14883, 17977, 21637, 26015, 31185, 37338, 44583, 53174, 63261, 75175, 89134],
+          label: "Partition numbers p(n)",
+        },
+        caption:
+          "p(0) through p(45) on a log scale: the curve keeps climbing but keeps flattening, faster than any polynomial yet slower than 2ⁿ, the in-between growth this chapter pins down.",
+      },
     },
     {
       id: "partition-ferrers",
       title: "Pictures made of dots",
       body: [
         "Partitions become geometry the moment you draw them. Write each part as a row of dots, longest row on top: the partition 4 + 2 + 1 of 7 becomes a staircase of dots, four over two over one. These pictures are called Ferrers diagrams, after the nineteenth-century Cambridge mathematician Norman Ferrers, and they turn statements about sums into statements about shapes [1].",
-        "The first dividend is the transpose. Flip a diagram across its diagonal, so rows become columns, and you get another legitimate partition of the same number: 4 + 2 + 1 flips to 3 + 2 + 1 + 1. The flip is reversible, so it pairs up partitions perfectly, and every pairing proves a theorem. Partitions of n into at most k parts correspond exactly to partitions of n into parts no bigger than k, because bounding the number of rows is, after a flip, bounding the length of the columns. A fact that looks like it needs calculation needs only a quarter turn of the page [1].",
+        "The first dividend is the transpose. Flip a diagram across its diagonal, so rows become columns, and you get another legitimate partition of the same number: 4 + 2 + 1 flips to 3 + 2 + 1 + 1. The flip is reversible, so it pairs up partitions perfectly, and every pairing proves a theorem.",
+        "Partitions of n into at most k parts correspond exactly to partitions of n into parts no bigger than k, because bounding the number of rows is, after a flip, bounding the length of the columns. A fact that looks like it needs calculation needs only a quarter turn of the page [1].",
         "This is a taste of bijective combinatorics, the art of proving two counts equal by translating between the objects rather than counting either side, and partition theory is its home turf. Some of its gems took centuries: the partitions of n into distinct parts and the partitions of n into odd parts are always equinumerous, six of each kind for n = 8, and Euler proved it with the machinery of the next section, but a direct dot-shuffling translation was only supplied later by Sylvester and others. The pictures are elementary; what people keep finding in them is not [1].",
       ],
+      figure: {
+        kind: "ferrers",
+        params: { parts: [4, 2, 1] },
+        caption:
+          "The Ferrers diagram of 4 + 2 + 1. Tap to conjugate: rows become columns, the same seven dots spell 3 + 2 + 1 + 1, and the reversible flip is itself the proof of the at-most-k theorem.",
+      },
     },
     {
       id: "partition-euler",
       title: "Euler's counting machine",
       body: [
         "Partition theory proper begins with Leonhard Euler in the 1740s, and with a trick that still powers the subject: the generating function. The idea sounds almost too naive to work. Encode a whole sequence of counts as the coefficients of one infinitely long polynomial, a power series, and then manipulate the series as a single algebraic object. Facts about the manipulation become facts about all the counts at once [1].",
-        "For partitions the encoding writes itself. Build the product of the geometric series 1 + x + x² + ... times 1 + x² + x⁴ + ... times 1 + x³ + x⁶ + ... and so on, one factor for each part size. When the product is expanded, each way of picking one term from each factor contributes to a power of x; picking x⁶ from the third factor means using two 3s, and the exponents add exactly the way parts of a sum do. So the coefficient of xⁿ in the expansion is precisely p(n): the algebra performs the counting. Euler's machine converts partition problems into series manipulations, and its first triumphs came immediately. Deleting the factors for even part sizes counts partitions into odd parts; a different alteration counts partitions into distinct parts; and Euler showed the two altered series are algebraically identical, proving the odd-equals-distinct theorem of the previous section without drawing a single dot [1].",
+        "For partitions the encoding writes itself. Build the product of the geometric series 1 + x + x² + ... times 1 + x² + x⁴ + ... times 1 + x³ + x⁶ + ... and so on, one factor for each part size. When the product is expanded, each way of picking one term from each factor contributes to a power of x; picking x⁶ from the third factor means using two 3s, and the exponents add exactly the way parts of a sum do. So the coefficient of xⁿ in the expansion is precisely p(n): the algebra performs the counting.",
+        "Euler's machine converts partition problems into series manipulations, and its first triumphs came immediately. Deleting the factors for even part sizes counts partitions into odd parts; a different alteration counts partitions into distinct parts; and Euler showed the two altered series are algebraically identical, proving the odd-equals-distinct theorem of the previous section without drawing a single dot [1].",
         "Generating functions went on to conquer combinatorics far beyond partitions, and the app's other chapters keep meeting them. The Fibonacci and Catalan sequences each have one that fits on a napkin. The partition function's is the deepest of the lot: it opens onto the theory of modular forms, the same waters where the proof of Fermat's Last Theorem swims, and the bridge it provides between adding whole numbers and complex analysis is, a century after Hardy and Ramanujan crossed it, still carrying traffic [1][4].",
       ],
     },
@@ -38,11 +55,18 @@ export const article: WikiArticle = {
       id: "partition-pentagonal",
       title: "The pentagonal surprise",
       body: [
-        "Euler kept probing his machine and hit one of the strangest theorems of his century. Consider the reciprocal of the partition series, the infinite product (1 − x)(1 − x²)(1 − x³)... Expanding it should, by rights, produce a chaos of coefficients. Instead nearly everything cancels. What survives is a ghostly skeleton: 1 − x − x² + x⁵ + x⁷ − x¹² − x¹⁵ + x²² + x²⁶ − ..., every surviving coefficient just plus or minus one, appearing in pairs of like sign [1].",
+        "Euler kept probing his machine and hit one of the strangest theorems of his century. Consider the reciprocal of the partition series, the infinite product (1 − x)(1 − x²)(1 − x³)... Expanding it should, by rights, produce a chaos of coefficients.",
+        "Instead nearly everything cancels. What survives is a ghostly skeleton: 1 − x − x² + x⁵ + x⁷ − x¹² − x¹⁵ + x²² + x²⁶ − ..., every surviving coefficient just plus or minus one, appearing in pairs of like sign [1].",
         "The exponents 1, 2, 5, 7, 12, 15, 22, 26 are the generalized pentagonal numbers, the dot-counts of nested pentagons and their mirror variants, a family with no visible business in this problem. Euler noticed the pattern from computed terms in the 1740s and then needed nearly a decade to find a proof, an interval he spent, by his own account, quite bothered. The modern proof is a Ferrers-diagram shuffle of exactly the kind this chapter has been practicing: a clever pairing that cancels almost every partition into distinct parts against a partner, with the pentagonal survivors left standing because the pairing rule jams on them [1].",
         "The theorem earns its keep the moment it is turned around. Because the pentagonal product is the reciprocal of the partition series, its skeleton yields a recurrence: p(n) = p(n − 1) + p(n − 2) − p(n − 5) − p(n − 7) + p(n − 12) + p(n − 15) − ..., signs in pairs, only about √n terms deep. This converts computing p(n) from an exhaustive listing problem into quick arithmetic, and it is how Percy MacMahon, the great hand-calculator of the era, produced his celebrated table of p(n) up to n = 200, computing by hand the thirteen-digit value p(200) = 3,972,999,029,388. That table was about to make history in someone else's hands [1][2].",
       ],
       anums: ["A001318"],
+      figure: {
+        kind: "ferrers",
+        params: { parts: [5, 4, 3] },
+        caption:
+          "The pairing in the modern proof cancels partitions into distinct parts two at a time, and it jams exactly on staircase shapes like 5 + 4 + 3, whose 12 dots form a pentagonal number. Tap to flip it into its conjugate anyway.",
+      },
     },
     {
       id: "partition-see",
@@ -57,9 +81,19 @@ export const article: WikiArticle = {
       title: "Ramanujan's congruences",
       body: [
         "In 1913, Godfrey Harold Hardy, then Britain's leading analyst, received an envelope from a 25-year-old shipping clerk in Madras with no university degree: nine pages of formulas, some familiar, some wild, a few, Hardy later said, that must be true because no one would have had the imagination to invent them. Srinivasa Ramanujan arrived in Cambridge the next year, and one of the most productive collaborations in the history of mathematics began [5].",
-        "Among the objects waiting in Cambridge was MacMahon's table. Where others saw a wall of digits, Ramanujan saw stripes. Every fifth entry, p(4), p(9), p(14), p(19), ..., is divisible by 5. Every seventh entry starting from p(5) is divisible by 7; every eleventh starting from p(6) is divisible by 11. He proved the first two and stated the third, publishing the results in 1919 [3]. Stop and let the oddity land: partitions are pure addition, yet here is multiplicative structure, divisibility on a perfect schedule, surfacing in a count that has no right to know what a multiple of 5 is.",
-        "The story since is a lesson in how one observation can feed a century. Freeman Dyson, as an undergraduate in 1944, conjectured a combinatorial explanation, a statistic he called the rank that should split the partitions of 5n + 4 into five exactly equal classes, and playfully named a subtler statistic, the crank, before anyone knew what it was; the rank explanation was proved for 5 and 7 in the 1950s, and the crank was finally constructed by Andrews and Garvan in 1988. Meanwhile the congruences themselves turned out to be the visible tip of something enormous: in 2000, Ken Ono proved that congruences like Ramanujan's exist for every prime modulus from 5 upward, infinitely many for each, by connecting the partition function to the theory of modular forms [4]. And in the other direction, an honest blank: whether p(n) is even or odd appears to behave like a coin flip, and proving anything about the pattern of its parity remains beyond reach. The stripes Ramanujan saw are now a landscape, with its far edge still unmapped [4].",
+        "Among the objects waiting in Cambridge was MacMahon's table. Where others saw a wall of digits, Ramanujan saw stripes. Every fifth entry, p(4), p(9), p(14), p(19), ..., is divisible by 5. Every seventh entry starting from p(5) is divisible by 7; every eleventh starting from p(6) is divisible by 11.",
+        "He proved the first two and stated the third, publishing the results in 1919 [3]. Stop and let the oddity land: partitions are pure addition, yet here is multiplicative structure, divisibility on a perfect schedule, surfacing in a count that has no right to know what a multiple of 5 is.",
+        "The story since is a lesson in how one observation can feed a century. Freeman Dyson, as an undergraduate in 1944, conjectured a combinatorial explanation, a statistic he called the rank that should split the partitions of 5n + 4 into five exactly equal classes, and playfully named a subtler statistic, the crank, before anyone knew what it was; the rank explanation was proved for 5 and 7 in the 1950s, and the crank was finally constructed by Andrews and Garvan in 1988.",
+        "Meanwhile the congruences themselves turned out to be the visible tip of something enormous: in 2000, Ken Ono proved that congruences like Ramanujan's exist for every prime modulus from 5 upward, infinitely many for each, by connecting the partition function to the theory of modular forms [4]. And in the other direction, an honest blank: whether p(n) is even or odd appears to behave like a coin flip, and proving anything about the pattern of its parity remains beyond reach. The stripes Ramanujan saw are now a landscape, with its far edge still unmapped [4].",
       ],
+      figure: {
+        kind: "residue-wheel",
+        params: {
+          terms: [1, 1, 2, 3, 5, 7, 11, 15, 22, 30, 42, 56, 77, 101, 135, 176, 231, 297, 385, 490, 627, 792, 1002, 1255],
+        },
+        caption:
+          "Step p(0), p(1), p(2), ... around a mod 25 wheel and watch every fifth landing, starting at p(4) = 5, hit a cell divisible by 5: Ramanujan's stripe made visible. Tap to advance and hear each term.",
+      },
     },
     {
       id: "partition-growth",
@@ -84,7 +118,8 @@ export const article: WikiArticle = {
       title: "An open door",
       body: [
         "For a subject whose objects a child can draw, partition theory has a remarkable stock of open problems. The parity question heads the list: nobody can prove that p(n) is even infinitely often and odd infinitely often in the balanced way all computation suggests, and the analogous questions modulo 3 are just as stubborn. The congruence landscape Ono opened is still being surveyed, with explicit new congruences found by computer search and no complete map in sight [4].",
-        "Ramanujan left one more gift. In his last letter to Hardy, written in 1920 as he was dying in India at 32, he described a new class of functions he called mock theta functions, partition-flavored series with mysterious symmetry defects. What he meant was only fully understood in 2002, when Sander Zwegers placed them inside the modern theory of modular forms, and they have since appeared in the physics of black holes, a subject that did not exist when Ramanujan wrote [5]. It is hard to name another case of a mathematician's deathbed notes setting research agendas a century out. The partition numbers sit in the app alongside every other sequence, and they will plot and play like any other; but you now know that behind the innocent staircase of 1, 2, 3, 5, 7, 11 lies one of mathematics' deepest and most human stories.",
+        "Ramanujan left one more gift. In his last letter to Hardy, written in 1920 as he was dying in India at 32, he described a new class of functions he called mock theta functions, partition-flavored series with mysterious symmetry defects. What he meant was only fully understood in 2002, when Sander Zwegers placed them inside the modern theory of modular forms, and they have since appeared in the physics of black holes, a subject that did not exist when Ramanujan wrote [5].",
+        "It is hard to name another case of a mathematician's deathbed notes setting research agendas a century out. The partition numbers sit in the app alongside every other sequence, and they will plot and play like any other; but you now know that behind the innocent staircase of 1, 2, 3, 5, 7, 11 lies one of mathematics' deepest and most human stories.",
       ],
       links: [
         { label: "Partition numbers, OEIS A000041", url: "https://oeis.org/A000041" },

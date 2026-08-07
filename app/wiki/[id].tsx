@@ -30,6 +30,8 @@ import {
 } from "../../src/theme/layout";
 import { fonts, radii, spacing } from "../../src/theme/tokens";
 
+const WIKI_AUTHOR = "Simonee Ezekiel Mariquit";
+
 /** Rough reading time at 200 wpm from every text field in the chapter. */
 function readingMinutes(article: WikiArticle): number {
   const words = article.sections
@@ -115,6 +117,7 @@ export default function WikiArticleScreen() {
         </Text>
         <Text style={styles.title}>{article.title}</Text>
         <Text style={styles.dek}>{article.summary}</Text>
+        <Text style={styles.byline}>by {WIKI_AUTHOR}</Text>
 
         {article.sections.map((section) => (
           <InfoSectionBlock key={section.id} section={section} />
@@ -232,6 +235,11 @@ const makeStyles = (colors: any) => StyleSheet.create({
     fontSize: 14.5,
     lineHeight: 21,
     marginTop: 6,
+  },
+  byline: {
+    color: colors.textMuted,
+    fontSize: 12.5,
+    marginTop: 8,
   },
   furtherReading: {
     marginTop: spacing.xl + 2,

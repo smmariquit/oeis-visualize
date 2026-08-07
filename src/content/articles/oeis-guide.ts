@@ -21,6 +21,12 @@ export const article: WikiArticle = {
         caption:
           "Romanesco broccoli. Notice a pattern, count something about it, and the OEIS will tell you whether anyone has counted the same thing before you.",
       },
+      figure: {
+        kind: "ulam-mini",
+        params: { highlightDiagonal: true },
+        caption:
+          "Numbers 1 to 400 wound into a square spiral with the primes filled in: the diagonal streaks nobody expected are exactly the kind of noticed-but-unexplained pattern the OEIS was built to catalog.",
+      },
       links: [
         { label: "Browse oeis.org", url: "https://oeis.org" },
         { label: "N. J. A. Sloane (OEIS founder)", url: "https://oeis.org/wiki/User:N._J._A._Sloane" },
@@ -35,6 +41,15 @@ export const article: WikiArticle = {
         "So he started his own reference. Every interesting sequence he met, in books, journals, or his own work, went onto a file card, and the cards were sorted into lexicographic order so a sequence could be looked up from its opening terms, the same way you look up a word from its opening letters. In 1967 the growing collection was transferred to punched cards, which made it sortable by machine [5].",
         "The design decision hiding in those cards still powers the OEIS today: index the sequences by their terms, not by their names. Names are inconsistent and inventions of hindsight, but the numbers themselves are a universal address. Type what you have, get back what it is.",
       ],
+      figure: {
+        kind: "term-plot",
+        params: {
+          terms: [0, 1, 8, 78, 944, 13800, 237432, 4708144, 105822432, 2660215680, 73983185000, 2255828154624],
+          label: "A000435, the sequence that started it all",
+        },
+        caption:
+          "The tree-height sequence from Sloane's thesis on a symlog scale: twelve terms in, it has already passed two trillion, and in 1964 no reference book on Earth could name it.",
+      },
       anums: ["A000435"],
     },
     {
@@ -83,6 +98,11 @@ export const article: WikiArticle = {
       body: [
         "A worked example makes the anatomy concrete. Open the Fibonacci entry, A000045, and you will find: offset 0, so the data 0, 1, 1, 2, 3, 5, ... starts at a(0); the keywords \"core\" and \"nice\", the editors telling you this one is both foundational and beautiful; a b-file extending the terms into the thousands; a formula section that opens with the recurrence and Binet's closed form and then wanders through dozens of stranger identities; programs in a dozen languages; and cross-references to the Lucas numbers, the golden ratio, and scores of variants. All of that knowledge is attached to one permanent address, which is the whole trick of the encyclopedia in a sentence.",
       ],
+      figure: {
+        kind: "ratio-convergence",
+        caption:
+          "One line of A000045's formula section made visible: each bar is a ratio of consecutive Fibonacci terms, F(n+1)/F(n), and the bars crowd toward the dashed gold line at the golden ratio φ.",
+      },
     },
     {
       id: "og-superseeker",

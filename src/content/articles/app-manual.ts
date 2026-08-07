@@ -21,7 +21,8 @@ export const article: WikiArticle = {
         "The search box on the Home tab understands three kinds of query and figures out which one you mean automatically.",
         "By name. Type words from a sequence's name, like \"fibonacci\" or \"prime twin\". Every word you type must match somewhere in the name, so adding words narrows the results. Case does not matter.",
         "By A-number. Type the catalog ID, like A005132. You can be lazy about it: a5132 works too, and the app pads the digits to the official six-digit form for you.",
-        "By terms. Type the first few values you know, separated by commas or spaces, like 1,1,2,3,5. The app finds sequences containing exactly that run of values, consecutively and in order. This is the search mode that feels like magic: it is how you identify a pattern you met in the wild. Negative numbers are fine. If you get too many results, add one more term; each extra term cuts the list dramatically.",
+        "By terms. Type the first few values you know, separated by commas or spaces, like 1,1,2,3,5. The app finds sequences containing exactly that run of values, consecutively and in order. This is the search mode that feels like magic: it is how you identify a pattern you met in the wild.",
+        "Negative numbers are fine. If you get too many results, add one more term; each extra term cuts the list dramatically.",
         "All searches run against the on-device database described in the Offline section, which is why results appear instantly and why search works in airplane mode. If a search comes up empty, check the order of your terms first (order matters!), then try fewer of them, in case your version of the sequence starts at a different spot than the catalog's.",
       ],
     },
@@ -45,12 +46,22 @@ export const article: WikiArticle = {
       ],
     },
     {
+      id: "am-lenses",
+      figure: {
+        kind: "pisano-strip",
+        caption:
+          "What switching lenses can reveal: reduce Fibonacci mod 5 and a repeating strip of colors appears with Pisano period 20, the kind of structure the grid view surfaces; tap the strip to hear the loop played as notes.",
+      },
+    },
+    {
       id: "am-daily",
       title: "OEISdle, the daily puzzle",
       body: [
         "OEISdle is the app's daily guessing game, in the spirit of Wordle [3] but with sequences: every day, one sequence from a hand-picked pool is the puzzle, you see its opening terms, and you have three guesses to name the next one. The pool rotates so that every puzzle appears before any repeats and no two consecutive days feel alike, and everyone gets the same puzzle on the same date.",
-        "Three difficulties change how much help you get. Easy shows 8 terms, gives you the hint right away, and lets you pick from 4 candidate answers. Normal shows 6 terms and 6 candidates, and reveals the hint only after your first wrong guess. Hard shows just 5 terms, makes you type the answer yourself, and holds the hint back until you have missed twice. You can play all three difficulties of the same day's puzzle.",
-        "Guessing has a few kindnesses built in. Only whole numbers count, spaces and commas in your typing are ignored, and repeating a guess you already tried costs you nothing. Wrong guesses get struck through in the guess slots so you can see your history. The clue tiles themselves are playable: tap any term to hear its pitch, and prime terms glow. Guess right and the whole sequence takes a bow, tiles hopping in order while their notes play as a run.",
+        "Three difficulties change how much help you get. Easy shows 8 terms, gives you the hint right away, and lets you pick from 4 candidate answers. Normal shows 6 terms and 6 candidates, and reveals the hint only after your first wrong guess.",
+        "Hard shows just 5 terms, makes you type the answer yourself, and holds the hint back until you have missed twice. You can play all three difficulties of the same day's puzzle.",
+        "Guessing has a few kindnesses built in. Only whole numbers count, spaces and commas in your typing are ignored, and repeating a guess you already tried costs you nothing. Wrong guesses get struck through in the guess slots so you can see your history.",
+        "The clue tiles themselves are playable: tap any term to hear its pitch, and prime terms glow. Guess right and the whole sequence takes a bow, tiles hopping in order while their notes play as a run.",
         "Streaks are counted by days: solve any difficulty on a given day and the streak survives; end the day with only failed attempts and it resets. Perfect-square streaks (1, 4, 9, 16, ...) are celebrated with confetti, which is exactly the kind of joke a sequence app should make. Progress is saved on your device only.",
         "Two more buttons round it out. Share produces a spoiler-free result card (date, difficulty, score) you can send to a friend. Practice mode lets you play through the entire puzzle pool at your own pace: practice rounds never touch your streak, and the app quietly skips today's daily puzzle in practice so nothing spoils the real game. After any solved or failed puzzle, one tap takes you to that sequence's visualization to see what you were guessing at.",
       ],
@@ -61,9 +72,23 @@ export const article: WikiArticle = {
       body: [
         "Every visualization can be heard as well as seen. Sonification, turning data into sound, has a serious research pedigree [2]: the ear is superb at noticing rhythm, repetition, and drift over time, which are exactly the features sequences have. The OEIS itself tags entries worth listening to with the keyword \"hear\", and its editors have long championed playing sequences aloud [4].",
         "The Settings tab controls how terms become notes, globally for the whole app. The Scale choice decides which notes are allowed: Pentatonic (the default) uses five notes per octave, the black-keys sound where any two notes agree, so even wild sequences stay pleasant; Major is the bright seven-note scale of most pop songs; Minor is its moodier cousin; and Chromatic allows all twelve notes, the most faithful to the raw numbers and the most tense. The Key slider shifts everything up or down by semitones, from C up through B, if you prefer your mathematics in E flat.",
-        "On each visualization screen, the Musicalize button opens the layer toggles. Each layer is one instrument with its own recipe for reading a(n): Melody takes the remainder of a(n) divided by 25 and picks a scale step, higher remainders giving higher notes. Bass does the same with remainder 15, about one and a half octaves down, in a warmer tone. Harmony uses remainder 5, nudged by position, to shade the melody with soft high notes. Rhythm builds drums from the numbers: kick on every 4th term, snare when a(n) is odd, hi-hat on every 3rd. Digits plays the last four decimal digits of each term as a quick run, 0 low to 9 high. Pad roots a slow three-note chord on every 4th term. Melody and Pad are on by default; layer combinations are remembered per sequence.",
+        "On each visualization screen, the Musicalize button opens the layer toggles. Each layer is one instrument with its own recipe for reading a(n): Melody takes the remainder of a(n) divided by 25 and picks a scale step, higher remainders giving higher notes. Bass does the same with remainder 15, about one and a half octaves down, in a warmer tone. Harmony uses remainder 5, nudged by position, to shade the melody with soft high notes.",
+        "Rhythm builds drums from the numbers: kick on every 4th term, snare when a(n) is odd, hi-hat on every 3rd. Digits plays the last four decimal digits of each term as a quick run, 0 low to 9 high. Pad roots a slow three-note chord on every 4th term. Melody and Pad are on by default; layer combinations are remembered per sequence.",
         "Separately, the app has an optional ambient background loop with its own volume control (on phones and tablets). It is scenery, not data: the sequence sounds play on top of it.",
       ],
+      figure: {
+        kind: "residue-wheel",
+        caption:
+          "The Melody recipe drawn as a wheel: each Fibonacci term lands on its remainder mod 25, and higher cells become higher notes; tap to step through the terms and hear every landing.",
+      },
+    },
+    {
+      id: "am-harmonics",
+      figure: {
+        kind: "harmonic-ladder",
+        caption:
+          "Why the app's tones sound warm rather than beepy: each note stacks quieter partials at 2, 3, and 4 times its base frequency on top of the fundamental; tap the ladder to hear the lit rungs fuse into one tone.",
+      },
     },
     {
       id: "am-compare",
@@ -76,6 +101,11 @@ export const article: WikiArticle = {
         "Comparisons can be heard too. The duet button plays both sequences together, the first panned to your left ear and the second to your right, and when both land on the same value at the same step, a little chime marks the coincidence. The first ten terms of each sequence are shown as strips with shared values highlighted.",
         "You can reach Compare three ways: from the preset matchups on the Compare tab (each chosen because the pair has a real story), from the compare button next to any cross-reference in a full OEIS entry, or by editing the URL directly on web, in the form /compare/A000045-A000108.",
       ],
+      figure: {
+        kind: "ratio-convergence",
+        caption:
+          "The Ratio lens in miniature: consecutive Fibonacci terms divided pairwise hop above and below the dashed gold guide before squeezing toward the golden ratio φ, exactly the settling the guide line marks in Compare.",
+      },
     },
     {
       id: "am-widgets",
