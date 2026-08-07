@@ -6,33 +6,41 @@ import { useColorScheme } from "react-native";
 import { resolveVizColor } from "./visualizations/vizColorStore";
 
 export const darkColors = {
-  // Surfaces
-  bg: "#07060E",
-  bgElevated: "#0E0C18",
-  bgCard: "#12101F",
-  bgCardHover: "#18152A",
-  surface: "#1A1729",
-  surfacePressed: "#242035",
-  surfaceLight: "#2A2545",
+  // Surfaces (whimsy redesign: warm plum ground)
+  bg: "#140E19",
+  bgElevated: "#1B1424",
+  bgCard: "#221933",
+  bgCardHover: "#2A203E",
+  surface: "#2A203E",
+  surfacePressed: "#34294C",
+  surfaceLight: "#3B2E54",
 
-  // Text
-  text: "#F3F0FF",
-  textDim: "#9B94B8",
-  // ≥4.5:1 (WCAG AA) on every dark surface up to surfaceLight
-  textMuted: "#8680AA",
+  // Text (contrast lifted well past AA)
+  text: "#F6F1FB",
+  textDim: "#C3B8DC",
+  textMuted: "#A79BC4",
 
   // Brand & interaction (teal chrome; neon purple stays viz-only in palettes)
   primary: "#2EC4B6",
   primaryDim: "rgba(46, 196, 182, 0.14)",
-  primaryBorder: "rgba(46, 196, 182, 0.4)",
+  primaryBorder: "rgba(46, 196, 182, 0.42)",
   accent: "#2EC4B6",
-  accentAlt: "#FF4A8D",
+  accentAlt: "#FF6FA5",
   interactive: "#5EEAD4",
 
   // Structure
-  border: "#2E2948",
-  borderSubtle: "rgba(255, 255, 255, 0.06)",
+  border: "#3B2E54",
+  borderSubtle: "rgba(255, 255, 255, 0.07)",
   focusRing: "rgba(46, 196, 182, 0.45)",
+
+  // Whimsy accents
+  gold: "#F2C766",
+  primeGlow: "rgba(116, 228, 242, 0.55)",
+  candySky: "#74E4F2",
+  candyLime: "#A8EE9B",
+  candyRose: "#FF9DC7",
+  candyPeach: "#FFB187",
+  candyButter: "#FFE18A",
 
   // Legacy aliases (viz + gradual migration)
   neonCyan: "#56E8FF",
@@ -43,29 +51,39 @@ export const darkColors = {
 };
 
 export const lightColors = {
-  bg: "#FFFFFF",
-  bgElevated: "#F3F4F6",
+  // Whimsy redesign: warm paper
+  bg: "#FBF8F4",
+  bgElevated: "#F4EFE9",
   bgCard: "#FFFFFF",
-  bgCardHover: "#F9FAFB",
-  surface: "#F3F4F6",
-  surfacePressed: "#E5E7EB",
-  surfaceLight: "#E5E7EB",
-  
-  text: "#111827",
-  textDim: "#4B5563",
-  // ≥4.5:1 (WCAG AA) on white and light cards/surfaces
-  textMuted: "#5C6678",
-  
-  primary: "#0D9488",
-  primaryDim: "rgba(13, 148, 136, 0.12)",
-  primaryBorder: "rgba(13, 148, 136, 0.35)",
-  accent: "#0D9488",
-  accentAlt: "#E11D48",
+  bgCardHover: "#F7F2EC",
+  surface: "#F1EBE4",
+  surfacePressed: "#E7DFD6",
+  surfaceLight: "#E0D7CC",
+
+  text: "#231B2E",
+  textDim: "#463B58",
+  // ≥4.5:1 (WCAG AA) on paper and cards
+  textMuted: "#5D5175",
+
+  primary: "#0E9488",
+  primaryDim: "rgba(14, 148, 136, 0.11)",
+  primaryBorder: "rgba(14, 148, 136, 0.35)",
+  accent: "#0E9488",
+  accentAlt: "#D6336C",
   interactive: "#0F766E",
-  
-  border: "#E5E7EB",
-  borderSubtle: "rgba(0, 0, 0, 0.06)",
-  focusRing: "rgba(13, 148, 136, 0.45)",
+
+  border: "#E2DAD0",
+  borderSubtle: "rgba(30, 20, 40, 0.08)",
+  focusRing: "rgba(14, 148, 136, 0.45)",
+
+  // Whimsy accents (AA-tuned twins of the dark candy set)
+  gold: "#A8741A",
+  primeGlow: "rgba(14, 135, 160, 0.35)",
+  candySky: "#0E87A0",
+  candyLime: "#4E9A2B",
+  candyRose: "#D6336C",
+  candyPeach: "#D9631E",
+  candyButter: "#B08312",
   
   neonCyan: "#0891B2",
   neonGreen: "#16A34A",

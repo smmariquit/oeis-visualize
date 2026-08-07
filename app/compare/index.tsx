@@ -44,60 +44,84 @@ const MAX_PICKS = 4;
 // curated matchups; each opens the N-way compare directly. Groups and
 // phrasing verified against oeis.org relationships (deep-research pass,
 // 2026-07-23): shared recurrences, complementary sets, exact ratios.
-const COMPARE_PRESETS: { anums: string[]; label: string; why: string }[] = [
+// `tag` = the lens the matchup shows off (whimsy redesign, turn 3).
+// `ratioLimit` = declared limit of a(n)/b(n) for the ratio lens gold guide.
+export type ComparePreset = {
+  anums: string[];
+  label: string;
+  tag: "Growth race" | "Complementary pair" | "Exact ratio" | "Shared slope" | "Density";
+  why: string;
+  ratioLimit?: number;
+};
+
+export const COMPARE_PRESETS: ComparePreset[] = [
   {
     anums: ["A000079", "A000225", "A014551", "A001045"],
     label: "The powers-of-2 braid",
+    tag: "Shared slope",
     why: "Powers of 2, Mersenne, Jacobsthal-Lucas, and Jacobsthal run parallel at the same log slope, braided by plus or minus one and a factor of three.",
   },
   {
     anums: ["A000045", "A000032", "A000129"],
     label: "Fibonacci vs Lucas vs Pell",
+    tag: "Growth race",
     why: "Three two-term recurrences racing at different exponential rates.",
   },
   {
     anums: ["A000201", "A001950"],
     label: "Lower vs upper Wythoff",
+    tag: "Complementary pair",
     why: "Two irrational-slope lines that together hit every positive integer exactly once; their ratio converges to the golden ratio.",
+    ratioLimit: 0.6180339887, // lower/upper -> 1/phi
   },
   {
     anums: ["A000108", "A000984"],
     label: "Catalan vs central binomial",
+    tag: "Exact ratio",
     why: "Catalan is the central binomial divided by n+1, so the ratio plot is a perfectly straight climb.",
   },
   {
     anums: ["A001006", "A000108", "A000984"],
     label: "Lattice-path race",
+    tag: "Growth race",
     why: "Motzkin grows at base 3 while Catalan and the central binomial run at base 4; log axes turn it into a slope race.",
   },
   {
     anums: ["A001045", "A014551"],
     label: "Jacobsthal vs Jacobsthal-Lucas",
+    tag: "Shared slope",
     why: "The base-2 cousin of Fibonacci vs Lucas: identical rule, different seeds, seed wobble fading into one shared slope.",
+    ratioLimit: 1 / 3, // J(n) ~ 2^n/3, JL(n) ~ 2^n
   },
   {
     anums: ["A000069", "A001969"],
     label: "Odious vs evil numbers",
+    tag: "Complementary pair",
     why: "The integers split by the parity of their binary digit sum; the phase plane hugs the diagonal with binary-carry wobble.",
+    ratioLimit: 1,
   },
   {
     anums: ["A000217", "A000290", "A000578"],
     label: "Triangular vs squares vs cubes",
+    tag: "Growth race",
     why: "The figurate ladder: polynomial growth of degree 2, 2, and 3.",
   },
   {
     anums: ["A000005", "A000010", "A000203"],
     label: "Divisors, totient, sigma",
+    tag: "Growth race",
     why: "The classic arithmetic-function trio: count of divisors, count of coprimes, and sum of divisors.",
   },
   {
     anums: ["A000041", "A000009", "A000110"],
     label: "Partitions three ways",
+    tag: "Growth race",
     why: "Any parts, distinct parts, and labeled set partitions pull apart fast.",
   },
   {
     anums: ["A000040", "A002808"],
     label: "Primes vs composites",
+    tag: "Density",
     why: "The whole numbers split in two; watch the prime side thin out.",
   },
 ];
@@ -231,7 +255,12 @@ export default function ComparePickerScreen() {
               testID={`compare-preset-${preset.anums[0]}`}
             >
               <View style={styles.presetText}>
-                <PlainText style={styles.presetLabel}>{preset.label}</PlainText>
+                <View style={styles.presetLabelRow}>
+                  <PlainText style={styles.presetLabel}>{preset.label}</PlainText>
+                  <View style={styles.presetTag}>
+                    <PlainText style={styles.presetTagText}>{preset.tag}</PlainText>
+                  </View>
+                </View>
                 <PlainText style={styles.presetWhy}>{preset.why}</PlainText>
               </View>
               <View style={styles.presetThumb}>
@@ -325,6 +354,25 @@ const makeStyles = (colors: any) => StyleSheet.create({
     color: colors.text,
     fontSize: 15,
     fontWeight: "700",
+  },
+  presetLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    flexWrap: "wrap",
+  },
+  presetTag: {
+    borderWidth: 1,
+    borderColor: colors.primaryBorder,
+    borderRadius: radii.pill,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  presetTagText: {
+    color: colors.primary,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 0.5,
   },
   presetWhy: {
     color: colors.textDim,

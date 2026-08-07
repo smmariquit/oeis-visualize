@@ -13,6 +13,8 @@ export interface NoteSpec {
   wave: WaveType;
   /** Percussion hits ignore frequency/wave. */
   drum?: DrumKind;
+  /** Stereo position, -1 (left) to 1 (right). Default center. */
+  pan?: number;
 }
 
 export interface MusicElementDef {

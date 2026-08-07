@@ -1,7 +1,7 @@
 // src/components/ui/InfoSectionBlock.tsx
 
 import React from "react";
-import { View, Image, StyleSheet } from "react-native";
+import { View, Image, Text, StyleSheet } from "react-native";
 import { useThemeColors } from "../../theme";
 import type { InfoSection } from "../../content/infoContent";
 import { containsLatexDelimiters } from "../../math/latexDelimiters";
@@ -21,14 +21,19 @@ export default function InfoSectionBlock({ section }: Props) {
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
 
   return (
-    <View style={styles.section} testID={`info-section-${section.id}`}>
-      <SectionHeading size="info" style={styles.heading}>{section.title}</SectionHeading>
+    <View
+      style={section.title ? styles.section : styles.untitledSection}
+      testID={`info-section-${section.id}`}
+    >
+      {section.title ? (
+        <SectionHeading size="info" style={styles.heading}>{section.title}</SectionHeading>
+      ) : null}
       {section.image ? (
         <View style={styles.figure}>
           <Image
             source={section.image.source}
             style={[styles.image, { aspectRatio: section.image.aspectRatio }]}
-            resizeMode="cover"
+            resizeMode="contain"
             accessible
             accessibilityRole="image"
             accessibilityLabel={section.image.caption}
@@ -47,9 +52,17 @@ export default function InfoSectionBlock({ section }: Props) {
             {paragraph}
           </MathText>
         ) : (
-          <BodyText key={paragraph.slice(0, 24)}>{paragraph}</BodyText>
+          <BodyText key={paragraph.slice(0, 24)} style={styles.bookBody}>
+            {paragraph}
+          </BodyText>
         )
       )}
+      {section.quote ? (
+        <View style={styles.quote}>
+          <Text style={styles.quoteText}>{section.quote.text}</Text>
+          <Text style={styles.quoteAttribution}>{section.quote.attribution}</Text>
+        </View>
+      ) : null}
       {section.bullets?.map((item) => (
         <BulletRow key={item.slice(0, 24)}>{item}</BulletRow>
       ))}
@@ -79,11 +92,43 @@ const makeStyles = (colors: any) => StyleSheet.create({
   heading: {
     marginTop: 0,
   },
-  mathBody: {
-    color: colors.textDim,
+  // book flow: no divider or subheading, prose runs continuously
+  untitledSection: {
+    marginTop: 16,
+  },
+  // Literata 16/1.7 for article body only; chrome stays Space Grotesk
+  bookBody: {
+    fontFamily: "Literata_400Regular",
+    color: colors.text,
     fontSize: 16,
-    lineHeight: 24,
+    lineHeight: 27,
     marginBottom: 8,
+  },
+  mathBody: {
+    fontFamily: "Literata_400Regular",
+    color: colors.text,
+    fontSize: 16,
+    lineHeight: 27,
+    marginBottom: 8,
+  },
+  quote: {
+    borderLeftWidth: 3,
+    borderLeftColor: colors.gold,
+    paddingLeft: 16,
+    paddingVertical: 4,
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  quoteText: {
+    fontFamily: "Literata_400Regular_Italic",
+    color: colors.textDim,
+    fontSize: 15.5,
+    lineHeight: 25,
+  },
+  quoteAttribution: {
+    color: colors.textMuted,
+    fontSize: 11.5,
+    marginTop: 6,
   },
   chipRow: {
     flexDirection: "row",

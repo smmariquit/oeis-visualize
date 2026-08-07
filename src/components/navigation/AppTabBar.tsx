@@ -5,9 +5,54 @@ import { View, Pressable, Text, StyleSheet, Platform } from "react-native";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
+import Animated, {
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
 import { useThemeColors } from "../../theme";
+import { motion } from "../../theme/motion";
 import { radii, typography } from "../../theme/tokens";
 import AppIcon, { type AppIconName } from "../ui/AppIcon";
+
+/** Active tab icon does a 2-bounce hop on tab change; reduced motion fades instead. */
+function TabIcon({ focused, name, color }: { focused: boolean; name: AppIconName; color: string }) {
+  const reducedMotion = useReducedMotion();
+  const y = useSharedValue(0);
+  const opacity = useSharedValue(1);
+  const wasFocused = React.useRef(focused);
+
+  React.useEffect(() => {
+    if (focused && !wasFocused.current) {
+      if (reducedMotion) {
+        opacity.value = 0;
+        opacity.value = withTiming(1, motion.reducedFade);
+      } else {
+        const seg = { duration: motion.hop.duration / 4, easing: motion.hop.easing };
+        y.value = withSequence(
+          withTiming(-6, seg),
+          withTiming(0, seg),
+          withTiming(-3, seg),
+          withTiming(0, seg)
+        );
+      }
+    }
+    wasFocused.current = focused;
+  }, [focused, reducedMotion, y, opacity]);
+
+  const style = useAnimatedStyle(() => ({
+    transform: [{ translateY: y.value }],
+    opacity: opacity.value,
+  }));
+
+  return (
+    <Animated.View style={style}>
+      <AppIcon name={name} size={22} color={color} />
+    </Animated.View>
+  );
+}
 
 const TAB_ICONS: Record<string, { active: AppIconName; inactive: AppIconName }> = {
   index: { active: "home", inactive: "home-outline" },
@@ -72,9 +117,9 @@ export default function AppTabBar({ state, descriptors, navigation }: BottomTabB
               pressed && styles.tabPressed,
             ]}
           >
-            <AppIcon
+            <TabIcon
+              focused={focused}
               name={focused ? icons.active : icons.inactive}
-              size={22}
               color={focused ? colors.primary : colors.textMuted}
             />
             <Text style={[styles.label, focused && styles.labelFocused]}>{label}</Text>

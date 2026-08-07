@@ -147,8 +147,8 @@ export default function SettingsScreen() {
         <>
           <SectionHeading icon="notifications-outline" padded={false}>Notifications</SectionHeading>
           <PlainText style={styles.note}>
-            A daily reminder naming the sequence of the day, around 9am. Tap it
-            to jump straight to that sequence.
+            Two daily reminders: the sequence of the day around 9am, and the
+            OEISdle puzzle around noon. Tap one to jump straight there.
           </PlainText>
           <View style={styles.toggleRow}>
             <PlainText style={styles.label}>Daily sequence</PlainText>

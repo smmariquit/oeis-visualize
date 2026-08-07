@@ -60,15 +60,41 @@ export function pairPoints(
   // ratio must use threshold-free logs: normalize() fits a per-sequence
   // symlog threshold, and subtracting logs with different thresholds bends
   // a genuinely constant ratio into a fake trend.
-  const la = signedLogs(termsA);
-  const lb = signedLogs(termsB);
-  const m = Math.min(n, la.length, lb.length);
-  const ratios = Array.from({ length: m }, (_, i) => la[i] - lb[i]);
+  const ratios = ratioLogs(termsA, termsB).slice(0, n);
   const min = Math.min(...ratios);
   const max = Math.max(...ratios);
   const r = max - min || 1;
   return ratios.map((v, i) => ({
-    x: pad + ((width - pad * 2) * i) / Math.max(m - 1, 1),
+    x: pad + ((width - pad * 2) * i) / Math.max(ratios.length - 1, 1),
     y: height - pad - ((v - min) / r) * (height - pad * 2),
   }));
+}
+
+function ratioLogs(termsA: string[], termsB: string[]): number[] {
+  const la = signedLogs(termsA);
+  const lb = signedLogs(termsB);
+  const m = Math.min(la.length, lb.length);
+  return Array.from({ length: m }, (_, i) => la[i] - lb[i]);
+}
+
+/**
+ * y-coordinate for a horizontal guide at ratio `value` on the ratio plot's
+ * own scale (same mapping as pairPoints ratio mode). Null when there is no
+ * data or the guide would land outside the padded plot box.
+ */
+export function ratioGuideY(
+  termsA: string[],
+  termsB: string[],
+  value: number,
+  height: number,
+  pad: number
+): number | null {
+  if (!(value > 0)) return null;
+  const ratios = ratioLogs(termsA, termsB);
+  if (ratios.length === 0) return null;
+  const min = Math.min(...ratios);
+  const max = Math.max(...ratios);
+  const r = max - min || 1;
+  const y = height - pad - ((Math.log10(value) - min) / r) * (height - pad * 2);
+  return y >= pad && y <= height - pad ? y : null;
 }

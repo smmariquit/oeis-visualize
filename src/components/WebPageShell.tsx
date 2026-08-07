@@ -75,7 +75,7 @@ function OfflineBanner() {
   return (
     <View style={bannerStyles.banner} testID="offline-banner" accessibilityRole="alert">
       <Text style={bannerStyles.text}>
-        Offline — search and cached sequences still work; new OEIS data will load when you reconnect.
+        No connection. The 397,648 sequences on this device would love the attention.
       </Text>
     </View>
   );

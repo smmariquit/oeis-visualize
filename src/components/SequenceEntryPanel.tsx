@@ -100,7 +100,7 @@ export default function SequenceEntryPanel({ anum, visible, onClose }: Props) {
         ) : error ? (
           <View style={styles.center}>
             <PlainText style={styles.errorText}>
-              Could not load this entry. Check your connection or open it on oeis.org.
+              The OEIS is thinking very hard. Give it a moment, then try again.
             </PlainText>
             <ExternalLink url={`https://oeis.org/${anum}`} label={`Open ${anum} on OEIS`} />
           </View>

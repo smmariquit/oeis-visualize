@@ -32,6 +32,8 @@ interface Props {
   onEntryPress?: () => void;
   onTermsPress?: () => void;
   onExportPress?: () => void;
+  /** Opens the Sound sheet (pitch lattice + transport + layers). */
+  onSoundPress?: () => void;
   termCount?: number;
   canLoadMore?: boolean;
   loadingMore?: boolean;
@@ -51,6 +53,7 @@ export default function Controls({
   onEntryPress,
   onTermsPress,
   onExportPress,
+  onSoundPress,
   termCount,
   canLoadMore,
   loadingMore,
@@ -203,6 +206,19 @@ export default function Controls({
         >
           {`${SPEEDS[speedIdx]}×`}
         </PillButton>
+        {onSoundPress ? (
+          <PillButton
+            variant={musicOn ? "primary" : "icon"}
+            icon="musical-notes"
+            iconPosition="only"
+            onPress={() => {
+              onSoundPress();
+              haptic();
+            }}
+            testID="controls-sound"
+            accessibilityLabel="Sonify: open sound controls"
+          />
+        ) : null}
       </View>
 
       {maxSteps > 0 ? <PlaybackProgressBar /> : null}

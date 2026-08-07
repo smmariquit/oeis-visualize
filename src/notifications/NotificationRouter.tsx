@@ -11,8 +11,9 @@ import * as Notifications from "expo-notifications";
 export default function NotificationRouter() {
   const response = Notifications.useLastNotificationResponse();
   React.useEffect(() => {
-    const anum = response?.notification.request.content.data?.anum;
-    if (typeof anum === "string") router.push(`/visualize/${anum}`);
+    const data = response?.notification.request.content.data;
+    if (data?.screen === "daily") router.push("/daily");
+    else if (typeof data?.anum === "string") router.push(`/visualize/${data.anum}`);
   }, [response]);
   return null;
 }

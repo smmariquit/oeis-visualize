@@ -46,9 +46,22 @@ describe("infoContent", () => {
     expect(seq?.bullets?.some((b) => /a\(n\)/i.test(b))).toBe(true);
   });
 
+  it("includes the book-treatment Fibonacci chapter", () => {
+    const article = getArticle("fibonacci");
+    expect(article?.title).toBe("The Fibonacci numbers");
+    expect(article?.sections.some((s) => /Kepler/.test(s.quote?.attribution ?? ""))).toBe(
+      true,
+    );
+    expect(article?.sections.some((s) => s.image)).toBe(true);
+    expect(article?.citations).toHaveLength(4);
+    expect(article?.citations?.some((c) => /Sigler/.test(c))).toBe(true);
+    expect(article?.citations?.some((c) => /Concrete Mathematics/.test(c))).toBe(true);
+    expect(article?.citations?.some((c) => /Livio/.test(c))).toBe(true);
+    expect(article?.citations?.some((c) => /Conway/.test(c))).toBe(true);
+  });
+
   it("includes the research-backed Learn articles", () => {
     for (const id of [
-      "fibonacci",
       "catalan",
       "simple-mysteries",
       "digits-and-bases",

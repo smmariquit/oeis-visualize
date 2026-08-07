@@ -79,6 +79,21 @@ export function genericCaption(
   };
 }
 
+const PHI = (1 + Math.sqrt(5)) / 2;
+
+/**
+ * Golden A000045: the build cursor's live line shows the ratio of the last
+ * two revealed terms closing in on φ.
+ */
+export function goldenRatioSuffix(terms: string[], step: number): string {
+  const i = Math.min(step, terms.length) - 1;
+  if (i < 1) return "";
+  const prev = Number(terms[i - 1]);
+  const cur = Number(terms[i]);
+  if (!isFinite(prev) || !isFinite(cur) || prev === 0) return "";
+  return `  ·  a(n)/a(n-1) = ${(cur / prev).toFixed(4)} → φ ≈ ${PHI.toFixed(4)}`;
+}
+
 const GUIDES: Partial<Record<string, string>> = {
   "fibonacci-spiral":
     "Dots at successive golden-angle turns, the same spacing as sunflower seed heads.",
@@ -104,8 +119,12 @@ export function captionForSequence(
   }
   if (sequence.vizType) {
     const generic = genericCaption(sequence, step);
+    const live =
+      sequence.anum === "A000045"
+        ? generic.live + goldenRatioSuffix(sequence.terms ?? [], step)
+        : generic.live;
     return {
-      live: generic.live,
+      live,
       guide: GUIDES[sequence.vizType] ?? generic.guide,
     };
   }

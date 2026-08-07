@@ -3,7 +3,11 @@
 // Plain list of the sequence's terms: n and a(n), no OEIS entry required.
 
 import React from "react";
-import { Modal, View, Pressable, Text, ScrollView, StyleSheet } from "react-native";
+import { Modal, View, Platform, Pressable, Text, ScrollView, StyleSheet } from "react-native";
+import * as Haptics from "expo-haptics";
+import { playNotes } from "../audio/engine";
+import { termTapNote } from "../audio/mapTerm";
+import { isPrimeTerm } from "../sequences/generators";
 import { useThemeColors } from "../theme";
 import { spacing, radii } from "../theme/tokens";
 import PlainText from "./PlainText";
@@ -41,14 +45,28 @@ export default function TermsSheet({
             </Pressable>
           </View>
           <ScrollView style={styles.scroll}>
-            {terms.map((t, i) => (
-              <View key={i} style={styles.row}>
-                <Text style={styles.index}>{`a(${i + offset})`}</Text>
-                <Text style={styles.value} selectable>
-                  {t}
-                </Text>
-              </View>
-            ))}
+            {terms.map((t, i) => {
+              const prime = isPrimeTerm(t);
+              return (
+                <Pressable
+                  key={i}
+                  style={styles.row}
+                  onPress={() => {
+                    void playNotes([termTapNote(t)]);
+                    if (Platform.OS !== "web") {
+                      void Haptics.selectionAsync();
+                    }
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={`a(${i + offset}) is ${t}${prime ? ", prime" : ""}, plays its pitch`}
+                >
+                  <Text style={styles.index}>{`a(${i + offset})`}</Text>
+                  <Text style={prime ? [styles.value, styles.valuePrime] : styles.value} selectable>
+                    {t}
+                  </Text>
+                </Pressable>
+              );
+            })}
           </ScrollView>
         </Pressable>
       </Pressable>
@@ -106,5 +124,11 @@ const makeStyles = (colors: any) => StyleSheet.create({
     fontSize: 14,
     fontVariant: ["tabular-nums"],
     flex: 1,
+  },
+  valuePrime: {
+    color: colors.candySky,
+    textShadowColor: colors.primeGlow,
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
   },
 });

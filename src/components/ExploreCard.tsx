@@ -7,14 +7,15 @@ import type { OEISSequence } from "../sequences/types";
 import { useThemeColors, hslToHex } from "../theme";
 import { radii, spacing } from "../theme/tokens";
 import ErrorBoundary from "./ErrorBoundary";
-import PlainText from "./PlainText";
 import SequenceName from "./SequenceName";
 import VizPreview from "./VizPreview";
 import { AnumBadge, BodyText, CardSurface, PressableCard, AppIcon } from "./ui";
-import { blurbFor } from "../sequences/metadata";
+import { DIFFICULTY, metadataFor } from "../sequences/metadata";
+import TermsLine from "./TermsLine";
 
-export const EXPLORE_CARD_W = 268;
-const PREVIEW_H = 148;
+// Design handoff: cards lead with the motif at 210x96.
+export const EXPLORE_CARD_W = 210;
+const PREVIEW_H = 96;
 
 function previewHue(anum: string): string {
   let n = 0;
@@ -29,10 +30,8 @@ interface Props {
 function ExploreCard({ sequence }: Props) {
   const colors = useThemeColors();
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
-  const termsLine = sequence.terms?.length
-    ? `${sequence.terms.slice(0, 10).join(", ")}…`
-    : null;
-  const blurb = blurbFor(sequence.anum);
+  const difficultyId = metadataFor(sequence.anum, sequence.name).difficulty;
+  const difficulty = difficultyId ? DIFFICULTY[difficultyId] : null;
 
   return (
     <PressableCard
@@ -59,16 +58,19 @@ function ExploreCard({ sequence }: Props) {
           )}
         </View>
         <View style={styles.info}>
-          <AnumBadge anum={sequence.anum} size="sm" />
+          <View style={styles.badgeRow}>
+            <AnumBadge anum={sequence.anum} size="sm" />
+            {difficulty ? (
+              <View
+                style={[styles.difficultyDot, { backgroundColor: difficulty.color }]}
+                accessibilityLabel={`Difficulty: ${difficulty.label}`}
+              />
+            ) : null}
+          </View>
           <SequenceName name={sequence.name} style={styles.name} numberOfLines={2} />
-          {blurb ? (
-            <PlainText style={styles.blurb} numberOfLines={3}>
-              {blurb}
-            </PlainText>
-          ) : null}
-          {termsLine ? (
+          {sequence.terms?.length ? (
             <BodyText variant="caption" style={styles.terms} numberOfLines={1}>
-              {termsLine}
+              <TermsLine terms={sequence.terms} max={10} />
             </BodyText>
           ) : null}
         </View>
@@ -101,6 +103,16 @@ const makeStyles = (colors: any) => StyleSheet.create({
     padding: spacing.md,
     gap: spacing.xs,
   },
+  badgeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  difficultyDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+  },
   name: {
     color: colors.text,
     fontSize: 15,
@@ -110,10 +122,5 @@ const makeStyles = (colors: any) => StyleSheet.create({
   terms: {
     fontVariant: ["tabular-nums"],
     marginBottom: 0,
-  },
-  blurb: {
-    color: colors.textDim,
-    fontSize: 14,
-    lineHeight: 20,
   },
 });

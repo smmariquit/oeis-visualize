@@ -12,7 +12,12 @@ import { picksForDates } from "../oeis/db";
 import { latexToUnicode } from "../math/latexToUnicode";
 
 const WINDOW_DAYS = 14;
-const HOUR = 9; // 09:00 local
+const HOUR = 9; // 09:00 local, sequence of the day
+const GAME_HOUR = 12; // 12:00 local, OEISdle puzzle
+
+export function localAt(date: string, hour: number): Date {
+  return new Date(`${date}T${String(hour).padStart(2, "0")}:00:00`);
+}
 
 export async function cancelDaily(): Promise<void> {
   if (Platform.OS === "web") return;
@@ -40,20 +45,37 @@ export async function rescheduleDaily(): Promise<void> {
     const picks = await picksForDates(dates);
 
     for (const p of picks) {
-      const at = new Date(`${p.date}T0${HOUR}:00:00`);
-      if (at.getTime() <= Date.now()) continue;
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: "Today's sequence",
-          // OS notification text cannot render KaTeX; Unicode only.
-          body: `${p.anum}: ${latexToUnicode(p.name)}`,
-          data: { anum: p.anum },
-        },
-        trigger: {
-          type: Notifications.SchedulableTriggerInputTypes.DATE,
-          date: at,
-        },
-      });
+      const at = localAt(p.date, HOUR);
+      if (at.getTime() > Date.now()) {
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: "Today's sequence",
+            // OS notification text cannot render KaTeX; Unicode only.
+            body: `${p.anum}: ${latexToUnicode(p.name)}`,
+            data: { anum: p.anum },
+          },
+          trigger: {
+            type: Notifications.SchedulableTriggerInputTypes.DATE,
+            date: at,
+          },
+        });
+      }
+
+      // OEISdle: naming the sequence would spoil the answer, so the body stays generic.
+      const gameAt = localAt(p.date, GAME_HOUR);
+      if (gameAt.getTime() > Date.now()) {
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: "OEISdle",
+            body: "Today's puzzle is ready. What comes next?",
+            data: { screen: "daily" },
+          },
+          trigger: {
+            type: Notifications.SchedulableTriggerInputTypes.DATE,
+            date: gameAt,
+          },
+        });
+      }
     }
   } catch {
     // never let scheduling break the app

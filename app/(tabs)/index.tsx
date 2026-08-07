@@ -1,14 +1,23 @@
 // app/(tabs)/index.tsx
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   View,
   ScrollView,
+  RefreshControl,
   StyleSheet,
   Platform,
   useWindowDimensions,
 } from "react-native";
 import { router } from "expo-router";
+import {
+  Easing,
+  runOnJS,
+  useAnimatedReaction,
+  useReducedMotion,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import { useThemeColors } from "../../src/theme";
 import { sequences } from "../../src/sequences/catalog";
 import type { OEISSequence } from "../../src/sequences/types";
@@ -18,7 +27,7 @@ import AmbientButton, { AmbientVolumeRow } from "../../src/components/AmbientBut
 import {
   AppFooter,
   BodyText,
-  LoadingSpinner,
+  CountingLoader,
   LogoTitleRow,
   PillButton,
   SearchField,
@@ -34,12 +43,42 @@ import {
 import { radii, spacing } from "../../src/theme/tokens";
 import * as oeis from "../../src/oeis/db";
 import PlainText from "../../src/components/PlainText";
+import FibonacciPullRefresh from "../../src/components/FibonacciPullRefresh";
 import { Pressable } from "react-native";
 import {
   MATH_FIELDS,
   metadataFor,
   type MathFieldId,
 } from "../../src/sequences/metadata";
+
+// Header count-up: ticks 0 → target over 1.4s (easeOut cubic) on first mount.
+// Reduced motion: the final number immediately.
+function useCountUp(target: number | null): number {
+  const reducedMotion = useReducedMotion();
+  const [display, setDisplay] = useState(0);
+  const sv = useSharedValue(0);
+
+  useEffect(() => {
+    if (target == null) return;
+    if (reducedMotion) {
+      sv.value = target;
+      return;
+    }
+    sv.value = withTiming(target, {
+      duration: 1400,
+      easing: Easing.out(Easing.cubic),
+    });
+  }, [target, reducedMotion, sv]);
+
+  useAnimatedReaction(
+    () => Math.round(sv.value),
+    (v, prev) => {
+      if (v !== prev) runOnJS(setDisplay)(v);
+    }
+  );
+
+  return display;
+}
 
 export default function HomeScreen() {
   const colors = useThemeColors();
@@ -55,6 +94,11 @@ export default function HomeScreen() {
   const [searching, setSearching] = useState(false);
   const [sotd, setSotd] = useState<OEISSequence | null>(null);
   const [seqCount, setSeqCount] = useState<number | null>(null);
+  // featured previews show the Recamán skeleton until the db is warm
+  const [dbReady, setDbReady] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const reducedMotion = useReducedMotion();
+  const displayCount = useCountUp(seqCount);
 
   useEffect(() => {
     oeis.sequenceCount().then(setSeqCount).catch(() => {});
@@ -74,8 +118,26 @@ export default function HomeScreen() {
   }, [results, fieldFilter]);
 
   useEffect(() => {
-    oeis.warmDb().catch(() => {});
+    oeis
+      .warmDb()
+      .catch(() => {})
+      .finally(() => setDbReady(true));
     oeis.sequenceOfTheDay().then(setSotd).catch(() => {});
+  }, []);
+
+  // Whimsy item 12: the pull refetches the daily pick and count. Both are
+  // deterministic per day/binary, so this is the honest no-op refresh.
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      const [pick, n] = await Promise.all([
+        oeis.sequenceOfTheDay(),
+        oeis.sequenceCount(),
+      ]);
+      setSotd(pick);
+      setSeqCount(n);
+    } catch {}
+    setRefreshing(false);
   }, []);
 
   useEffect(() => {
@@ -113,20 +175,21 @@ export default function HomeScreen() {
     } catch {}
   };
 
-  return (
-    <View style={styles.container} nativeID="main">
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        removeClippedSubviews={Platform.OS !== "web"}
-      >
+  const scrollProps = {
+    contentContainerStyle: styles.scroll,
+    showsVerticalScrollIndicator: false,
+    keyboardShouldPersistTaps: "handled" as const,
+    removeClippedSubviews: Platform.OS !== "web",
+  };
+
+  const body = (
+    <>
         <View style={styles.heroSection}>
           <LogoTitleRow
             title="Sequence Trip"
             subtitle={
               seqCount
-                ? `Visualizations of all ${seqCount.toLocaleString()} OEIS integer sequences`
+                ? `Visualizations of all ${displayCount.toLocaleString()} OEIS integer sequences`
                 : APP_TAGLINE
             }
             size="hero"
@@ -161,11 +224,20 @@ export default function HomeScreen() {
                 </Pressable>
               ))}
             </View>
-            {searching && <LoadingSpinner />}
+            {searching && <CountingLoader />}
             {!searching && filteredResults.length === 0 && (
-              <BodyText variant="empty">
-                {results.length === 0 ? "No sequences found" : "No results in that field"}
-              </BodyText>
+              results.length === 0 ? (
+                <>
+                  <BodyText variant="empty" style={styles.emptyTitle}>
+                    This sequence has not been imagined yet.
+                  </BodyText>
+                  <BodyText variant="muted">
+                    Try a name, an A-number, or the first few terms.
+                  </BodyText>
+                </>
+              ) : (
+                <BodyText variant="empty">No results in that field</BodyText>
+              )
             )}
             {filteredResults.map((seq, i) => (
               <ResultRow key={seq.anum} sequence={seq} index={i} />
@@ -217,6 +289,7 @@ export default function HomeScreen() {
                     sequence={seq}
                     index={i}
                     cardWidth={width}
+                    loading={!dbReady}
                   />
                 );
               })}
@@ -225,7 +298,40 @@ export default function HomeScreen() {
         )}
 
         <AppFooter />
-      </ScrollView>
+    </>
+  );
+
+  // Whimsy item 12: golden-spiral pull-to-refresh on native. Reduced motion
+  // keeps the stock RefreshControl; web keeps a plain scroll (no pull there).
+  const fibPull = Platform.OS !== "web" && !reducedMotion;
+
+  return (
+    <View style={styles.container} nativeID="main">
+      {fibPull ? (
+        <FibonacciPullRefresh
+          {...scrollProps}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          topOffset={safeAreaTop("home") - 24}
+        >
+          {body}
+        </FibonacciPullRefresh>
+      ) : (
+        <ScrollView
+          {...scrollProps}
+          refreshControl={
+            Platform.OS !== "web" ? (
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor={colors.primary}
+              />
+            ) : undefined
+          }
+        >
+          {body}
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -249,6 +355,9 @@ const makeStyles = (colors: any) => StyleSheet.create({
   },
   results: {
     paddingHorizontal: PAGE_PADDING,
+  },
+  emptyTitle: {
+    marginBottom: 0,
   },
   filterRow: {
     flexDirection: "row",

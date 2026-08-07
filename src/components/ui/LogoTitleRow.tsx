@@ -100,6 +100,8 @@ const makeStyles = (colors: any) => StyleSheet.create({
     fontSize: 15,
     marginTop: 2,
     lineHeight: 21,
+    // Home's sequence count ticks up on mount; tabular digits keep it steady
+    fontVariant: ["tabular-nums"],
   },
   subtitleHero: {
     marginTop: 6,

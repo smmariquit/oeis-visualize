@@ -4,12 +4,19 @@ jest.mock("react-native-reanimated", () => ({
   useSharedValue: (init: unknown) => ({ value: init }),
   useDerivedValue: (fn: () => unknown) => ({ value: typeof fn === "function" ? fn() : fn }),
   useFrameCallback: jest.fn(),
+  useAnimatedReaction: jest.fn(),
+  useReducedMotion: () => false,
+  runOnJS: (fn: (...args: unknown[]) => unknown) => fn,
   withTiming: (v: unknown) => v,
   withRepeat: (v: unknown) => v,
+  withDelay: (_ms: number, v: unknown) => v,
   Easing: {
     linear: (t: number) => t,
     inOut: () => (t: number) => t,
     sin: () => (t: number) => t,
+    cubic: (t: number) => t * t * t,
+    out: (e: (t: number) => number) => e,
+    bezier: () => (t: number) => t,
   },
 }));
 

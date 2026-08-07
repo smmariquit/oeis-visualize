@@ -19,6 +19,11 @@ function melodyNote(ctx: SonifyContext): NoteSpec {
   };
 }
 
+/** One-shot pitch for tapping a term in a strip; same mapping as the melody. */
+export function termTapNote(term: string): NoteSpec {
+  return melodyNote({ step: 0, term, speed: 1 });
+}
+
 function bassNote(ctx: SonifyContext): NoteSpec {
   const idx = termMod(ctx.term, 15);
   return {

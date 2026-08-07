@@ -1,26 +1,71 @@
 // app/(tabs)/explore.tsx
 
 import React, { useEffect, useState } from "react";
-import { View, ScrollView, StyleSheet, Text } from "react-native";
+import { View, ScrollView, StyleSheet, Text, Pressable } from "react-native";
+import { router } from "expo-router";
+import Svg, { Polyline } from "react-native-svg";
 import { useThemeColors } from "../../src/theme";
 import { COLLECTIONS } from "../../src/sequences/collections";
 import type { OEISSequence } from "../../src/sequences/types";
 import { resolveSequences } from "../../src/sequences/resolveSequence";
 import { getSequence } from "../../src/sequences/catalog";
+import {
+  MATH_FIELDS,
+  metadataFor,
+  type MathFieldId,
+} from "../../src/sequences/metadata";
+import { normalize } from "../../src/sequences/normalize";
 import ExploreCard, { EXPLORE_CARD_W } from "../../src/components/ExploreCard";
 import ResultRow from "../../src/components/ResultRow";
+import SequenceName from "../../src/components/SequenceName";
 import {
   BodyText,
-  LoadingSpinner,
+  CountingLoader,
   LogoTitleRow,
+  PillButton,
 } from "../../src/components/ui";
 import {
   PAGE_PADDING,
   safeAreaTop,
   tabBarScrollPadding,
 } from "../../src/theme/layout";
-import { spacing } from "../../src/theme/tokens";
+import { radii, spacing } from "../../src/theme/tokens";
 import * as oeis from "../../src/oeis/db";
+
+const FIELD_IDS = Object.keys(MATH_FIELDS) as MathFieldId[];
+const SPARK_W = 64;
+const SPARK_H = 22;
+
+// ponytail: plain symlog polyline instead of VizPreview — dozens of Skia
+// canvases at 64x22 is the heavier tool for a one-line sparkline
+function Sparkline({ terms, color }: { terms: string[]; color: string }) {
+  const pts = React.useMemo(() => {
+    const stats = normalize(terms.slice(0, 16));
+    const n = stats.logs.length;
+    if (n < 2) return "";
+    const range = stats.maxLog - stats.minLog || 1;
+    return stats.logs
+      .map((v, i) => {
+        const x = 3 + ((SPARK_W - 6) * i) / (n - 1);
+        const y = SPARK_H - 3 - ((SPARK_H - 6) * (v - stats.minLog)) / range;
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+      })
+      .join(" ");
+  }, [terms]);
+  if (!pts) return <View style={{ width: SPARK_W, height: SPARK_H }} />;
+  return (
+    <Svg width={SPARK_W} height={SPARK_H}>
+      <Polyline
+        points={pts}
+        fill="none"
+        stroke={color}
+        strokeWidth={1.6}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
 
 export default function ExploreScreen() {
   const colors = useThemeColors();
@@ -28,6 +73,9 @@ export default function ExploreScreen() {
 
   const [sequences, setSequences] = useState<Map<string, OEISSequence> | null>(null);
   const [resolving, setResolving] = useState(true);
+  // Atlas: dense list alternative to the shelves (design handoff section 4b)
+  const [atlas, setAtlas] = useState(false);
+  const [field, setField] = useState<MathFieldId | null>(null);
   // endless feed: random draws from all 397k sequences, appended on scroll
   const [feed, setFeed] = useState<OEISSequence[]>([]);
   const feedBusy = React.useRef(false);
@@ -81,6 +129,29 @@ export default function ExploreScreen() {
     };
   }, [loadMoreFeed]);
 
+  // Atlas list: every collection anum once, then the endless feed continues it
+  const atlasRows = React.useMemo(() => {
+    if (!atlas || !sequences) return [];
+    const seen = new Set<string>();
+    const out: OEISSequence[] = [];
+    for (const anum of COLLECTIONS.flatMap((c) => c.anums)) {
+      const s = sequences.get(anum);
+      if (s && !seen.has(s.anum)) {
+        seen.add(s.anum);
+        out.push(s);
+      }
+    }
+    for (const s of feed) {
+      if (!seen.has(s.anum)) {
+        seen.add(s.anum);
+        out.push(s);
+      }
+    }
+    return field
+      ? out.filter((s) => metadataFor(s.anum, s.name).fields.includes(field))
+      : out;
+  }, [atlas, sequences, feed, field]);
+
   return (
     <View style={styles.container} testID="explore-screen" nativeID="main">
       <ScrollView
@@ -95,16 +166,94 @@ export default function ExploreScreen() {
         }}
       >
         <View style={styles.hero}>
-          <LogoTitleRow
-            title="Explore"
-            subtitle="Sequence collections. Swipe through, tap to visualize."
-            size="page"
+          <View style={styles.heroTitle}>
+            <LogoTitleRow
+              title="Explore"
+              subtitle={
+                atlas
+                  ? "Browse the whole catalog."
+                  : "Sequence collections. Swipe through, tap to visualize."
+              }
+              size="page"
+            />
+          </View>
+          <PillButton
+            variant="icon"
+            icon={atlas ? "albums-outline" : "list-outline"}
+            iconPosition="only"
+            onPress={() => setAtlas((a) => !a)}
+            accessibilityLabel={atlas ? "Switch to shelves view" : "Switch to Atlas view"}
+            testID="explore-view-toggle"
           />
         </View>
 
         {!sequences ? (
           <View style={styles.loading}>
-            <LoadingSpinner />
+            <CountingLoader />
+          </View>
+        ) : atlas ? (
+          <View style={styles.section} testID="explore-atlas">
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.fieldChips}
+            >
+              {FIELD_IDS.map((id) => {
+                const active = field === id;
+                return (
+                  <Pressable
+                    key={id}
+                    onPress={() => setField(active ? null : id)}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: active }}
+                    accessibilityLabel={`Filter by ${MATH_FIELDS[id].label}`}
+                    style={[styles.fieldChip, active && styles.fieldChipActive]}
+                  >
+                    <View
+                      style={[styles.fieldDot, { backgroundColor: MATH_FIELDS[id].color }]}
+                    />
+                    <Text style={styles.fieldChipLabel}>{MATH_FIELDS[id].label}</Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+            <View style={styles.atlasList}>
+              {atlasRows.map((seq) => {
+                // ponytail: first field colors dot + sparkline; fallback id
+                // only guards sequences resolved without a name
+                const fid = metadataFor(seq.anum, seq.name).fields[0] ?? "number-theory";
+                const fcolor = MATH_FIELDS[fid].color;
+                return (
+                  <Pressable
+                    key={seq.anum}
+                    onPress={() => router.push(`/visualize/${seq.anum}`)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Visualize ${seq.name}, ${seq.anum}`}
+                    style={({ pressed }) => [
+                      styles.atlasRow,
+                      pressed && styles.atlasRowPressed,
+                    ]}
+                  >
+                    <View style={[styles.fieldDot, { backgroundColor: fcolor }]} />
+                    <Text style={styles.atlasAnum}>{seq.anum}</Text>
+                    <SequenceName
+                      name={seq.name}
+                      style={styles.atlasName}
+                      numberOfLines={1}
+                    />
+                    {seq.terms?.length ? (
+                      <Sparkline terms={seq.terms} color={fcolor} />
+                    ) : (
+                      <View style={styles.sparkGap} />
+                    )}
+                  </Pressable>
+                );
+              })}
+            </View>
+            <BodyText variant="caption" style={styles.atlasFoot}>
+              Scrolling past the end draws randomly from all 397,648 sequences.
+            </BodyText>
+            <CountingLoader label="finding more" />
           </View>
         ) : (
           COLLECTIONS.map((collection) => (
@@ -129,7 +278,7 @@ export default function ExploreScreen() {
                   if (!resolving) return null;
                   return (
                     <View key={anum} style={styles.cardPlaceholder} testID="explore-card-loading">
-                      <LoadingSpinner />
+                      <CountingLoader />
                       <Text style={styles.placeholderText}>{anum}</Text>
                     </View>
                   );
@@ -139,22 +288,24 @@ export default function ExploreScreen() {
           ))
         )}
 
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Endless</Text>
-            <BodyText variant="caption" style={styles.sectionDesc}>
-              Random draws from the whole database. Keep scrolling.
-            </BodyText>
-          </View>
-          <View style={styles.feed} testID="explore-endless">
-            {feed.map((seq) => (
-              <ResultRow key={seq.anum} sequence={seq} />
-            ))}
-            <View style={styles.loading}>
-              <LoadingSpinner />
+        {!atlas ? (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Endless</Text>
+              <BodyText variant="caption" style={styles.sectionDesc}>
+                Random draws from the whole database. Keep scrolling.
+              </BodyText>
+            </View>
+            <View style={styles.feed} testID="explore-endless">
+              {feed.map((seq) => (
+                <ResultRow key={seq.anum} sequence={seq} />
+              ))}
+              <View style={styles.loading}>
+                <CountingLoader label="finding more" />
+              </View>
             </View>
           </View>
-        </View>
+        ) : null}
       </ScrollView>
     </View>
   );
@@ -172,6 +323,13 @@ const makeStyles = (colors: any) => StyleSheet.create({
     paddingTop: safeAreaTop("home"),
     paddingHorizontal: PAGE_PADDING,
     paddingBottom: spacing.lg,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  heroTitle: {
+    flex: 1,
+    minWidth: 0,
   },
   loading: {
     paddingVertical: spacing.xxl,
@@ -218,5 +376,71 @@ const makeStyles = (colors: any) => StyleSheet.create({
     color: colors.textMuted,
     fontSize: 13,
     fontVariant: ["tabular-nums"],
+  },
+  fieldChips: {
+    paddingHorizontal: PAGE_PADDING,
+    paddingBottom: spacing.md,
+    gap: 6,
+  },
+  fieldChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: radii.pill,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  fieldChipActive: {
+    borderColor: colors.primaryBorder,
+    backgroundColor: colors.primaryDim,
+  },
+  fieldChipLabel: {
+    color: colors.textDim,
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  fieldDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+  },
+  atlasList: {
+    paddingHorizontal: PAGE_PADDING,
+  },
+  atlasRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    minHeight: 52,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderSubtle,
+  },
+  atlasRowPressed: {
+    backgroundColor: colors.bgElevated,
+  },
+  atlasAnum: {
+    color: colors.interactive,
+    fontSize: 12,
+    fontWeight: "600",
+    fontVariant: ["tabular-nums"],
+    width: 64,
+  },
+  atlasName: {
+    flex: 1,
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  atlasFoot: {
+    color: colors.textMuted,
+    paddingHorizontal: PAGE_PADDING,
+    paddingTop: spacing.sm,
+    marginBottom: 0,
+  },
+  sparkGap: {
+    width: SPARK_W,
+    height: SPARK_H,
   },
 });

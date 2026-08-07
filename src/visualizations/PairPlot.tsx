@@ -4,11 +4,11 @@
 // animation: construction order carries no information here (Tversky 2002).
 
 import React, { useMemo } from "react";
-import { Path as SkiaPath, Circle } from "@shopify/react-native-skia";
+import { Path as SkiaPath, Circle, Line, DashPathEffect, vec } from "@shopify/react-native-skia";
 import VizCanvas from "./VizCanvas";
-import { hslToHex } from "../theme";
+import { hslToHex, useThemeColors } from "../theme";
 import { makePolylinePath } from "../playback/smoothPath";
-import { pairPoints, type PairMode } from "./pairPoints";
+import { pairPoints, ratioGuideY, type PairMode } from "./pairPoints";
 
 interface Props {
   termsA: string[];
@@ -16,12 +16,23 @@ interface Props {
   mode: PairMode;
   width: number;
   height: number;
+  /** Ratio mode only: draw a dashed gold guide at this a(n)/b(n) limit. */
+  guideValue?: number;
 }
 
-export default function PairPlot({ termsA, termsB, mode, width, height }: Props) {
+export default function PairPlot({ termsA, termsB, mode, width, height, guideValue }: Props) {
+  const colors = useThemeColors();
   const points = useMemo(
     () => pairPoints(termsA, termsB, mode, width, height, 24),
     [termsA, termsB, mode, width, height]
+  );
+
+  const guideY = useMemo(
+    () =>
+      mode === "ratio" && guideValue !== undefined
+        ? ratioGuideY(termsA, termsB, guideValue, height, 24)
+        : null,
+    [termsA, termsB, mode, guideValue, height]
   );
 
   const path = useMemo(
@@ -36,6 +47,11 @@ export default function PairPlot({ termsA, termsB, mode, width, height }: Props)
 
   return (
     <VizCanvas width={width} height={height}>
+      {guideY !== null ? (
+        <Line p1={vec(24, guideY)} p2={vec(width - 24, guideY)} color={colors.gold} strokeWidth={1.2}>
+          <DashPathEffect intervals={[4, 5]} />
+        </Line>
+      ) : null}
       <SkiaPath
         path={path}
         style="stroke"

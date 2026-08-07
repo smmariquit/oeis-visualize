@@ -1,14 +1,20 @@
 // src/visualizations/UlamSpiral.tsx
 
 import React, { useMemo } from "react";
+import { Platform } from "react-native";
 import {
   Circle,
   Group,
+  matchFont,
 } from "@shopify/react-native-skia";
 import VizCanvas from "./VizCanvas";
+import SkiaLabel from "./SkiaLabel";
 import { ulamSpiralCoords } from "../sequences/generators";
-import { hslToHex } from "../theme";
+import { hslToHex, useThemeColors } from "../theme";
 import { useBuildAnimation, useItemFrac } from "../playback/useBuildAnimation";
+
+const fontFamily = Platform.select({ ios: "Helvetica", default: "sans-serif" });
+const headFont = matchFont({ fontFamily, fontSize: 13, fontWeight: "600" });
 
 interface Props {
   width: number;
@@ -64,6 +70,7 @@ export function UlamSpiralPreview({ width, height }: { width: number; height: nu
 }
 
 export function UlamSpiralFull({ width, height, count = 2000 }: Omit<Props, "preview">) {
+  const colors = useThemeColors();
   const { progressSV, step: visible } = useBuildAnimation(count, false);
   const fade = useItemFrac(progressSV, visible);
   const coords = useMemo(() => ulamSpiralCoords(count), [count]);
@@ -79,6 +86,12 @@ export function UlamSpiralFull({ width, height, count = 2000 }: Omit<Props, "pre
   const cx = width / 2;
   const cy = height / 2;
   const cellSize = Math.min(width, height) * 0.9 / (maxCoord * 2 + 1);
+
+  // Counting head label ("n = 97, prime"), native twin of the web canvas one.
+  const headI = Math.min(visible, coords.length - 1);
+  const head = visible > 0 ? coords[headI] : null;
+  const headPx = head ? cx + head.x * cellSize : 0;
+  const headPy = head ? cy + head.y * cellSize : 0;
 
   return (
     <VizCanvas width={width} height={height}>
@@ -115,6 +128,16 @@ export function UlamSpiralFull({ width, height, count = 2000 }: Omit<Props, "pre
             )}
           />
         </Group>
+      )}
+      {head && (
+        <SkiaLabel
+          text={`n = ${headI + 1}${head.prime ? ", prime" : ""}`}
+          x={headPx + 12 > width - 130 ? headPx - 12 - 110 : headPx + 12}
+          y={headPy - 14}
+          font={headFont}
+          fg={colors.text}
+          bg={colors.bg}
+        />
       )}
     </VizCanvas>
   );

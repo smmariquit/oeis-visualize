@@ -100,6 +100,14 @@ export function isPrimeCheck(n: number): boolean {
   return isPrime(n);
 }
 
+/** Prime check for a term's digit string (term strips, prime glow). */
+// ponytail: trial division caps at 1e9 so strips never jank; Miller-Rabin if huge terms ever need glow
+export function isPrimeTerm(t: string): boolean {
+  const n = Number(t);
+  if (!Number.isInteger(n) || n < 2 || n > 1e9) return false;
+  return isPrime(n);
+}
+
 export function ulamSpiralCoords(count: number): { x: number; y: number; n: number; prime: boolean }[] {
   const coords: { x: number; y: number; n: number; prime: boolean }[] = [];
   let x = 0, y = 0;

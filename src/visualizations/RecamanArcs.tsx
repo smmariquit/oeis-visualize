@@ -1,15 +1,23 @@
 // src/visualizations/RecamanArcs.tsx
 
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import {
   Path as SkiaPath,
   Skia,
   Circle,
   Line,
 } from "@shopify/react-native-skia";
+import {
+  useDerivedValue,
+  useReducedMotion,
+  useSharedValue,
+  withTiming,
+  type SharedValue,
+} from "react-native-reanimated";
 import VizCanvas from "./VizCanvas";
 import { hslToHex, useThemeColors } from "../theme";
 import { useBuildAnimation, useItemFrac } from "../playback/useBuildAnimation";
+import { motion } from "../theme/motion";
 import { recaman } from "../sequences/generators";
 import { layoutRecaman } from "./recamanLayout";
 
@@ -71,27 +79,69 @@ function buildArcs(
 }
 
 export function RecamanArcsPreview({ width, height }: { width: number; height: number }) {
+  const reducedMotion = useReducedMotion();
   const seq = useMemo(() => recaman(20), []);
   const { arcs, head } = useMemo(
     () => buildArcs(seq, width, height, true),
     [seq, width, height]
   );
 
+  // whimsy item 11: when the card's data lands, arcs draw in over 1.4s with
+  // the glide feel instead of popping. Reduced motion: full path immediately.
+  const total = arcs.length;
+  const progressSV = useSharedValue(reducedMotion ? total : 0);
+  useEffect(() => {
+    if (reducedMotion) {
+      progressSV.value = total;
+      return;
+    }
+    progressSV.value = withTiming(total, {
+      duration: 1400,
+      easing: motion.glide.easing,
+    });
+  }, [reducedMotion, total, progressSV]);
+  const headOpacity = useDerivedValue(
+    () => progressSV.value / Math.max(total, 1),
+    [total]
+  );
+
   return (
     <VizCanvas width={width} height={height}>
       {arcs.map((arc, i) => (
-        <SkiaPath
-          key={i}
-          path={arc.path}
-          style="stroke"
-          strokeWidth={1.2}
-          color={hslToHex(arc.hue, 90, 55)}
-        />
+        <PreviewArc key={i} arc={arc} index={i} progressSV={progressSV} />
       ))}
       {head && (
-        <Circle cx={head.x} cy={head.y} r={3} color={hslToHex(0, 100, 70)} />
+        <Circle
+          cx={head.x}
+          cy={head.y}
+          r={3}
+          color={hslToHex(0, 100, 70)}
+          opacity={headOpacity}
+        />
       )}
     </VizCanvas>
+  );
+}
+
+function PreviewArc({
+  arc,
+  index,
+  progressSV,
+}: {
+  arc: Arc;
+  index: number;
+  progressSV: SharedValue<number>;
+}) {
+  const end = useItemFrac(progressSV, index);
+  return (
+    <SkiaPath
+      path={arc.path}
+      style="stroke"
+      strokeWidth={1.2}
+      color={hslToHex(arc.hue, 90, 55)}
+      start={0}
+      end={end}
+    />
   );
 }
 

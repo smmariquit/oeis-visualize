@@ -40,7 +40,14 @@ class WebAudioEngine {
     gain.gain.exponentialRampToValueAtTime(Math.max(note.gain, 0.0001), t0 + 0.012);
     gain.gain.exponentialRampToValueAtTime(0.0001, t0 + note.duration);
     osc.connect(gain);
-    gain.connect(this.master!);
+    if (note.pan) {
+      const panner = ctx.createStereoPanner();
+      panner.pan.value = note.pan;
+      gain.connect(panner);
+      panner.connect(this.master!);
+    } else {
+      gain.connect(this.master!);
+    }
     osc.start(t0);
     osc.stop(t0 + note.duration + 0.04);
   }

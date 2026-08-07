@@ -29,7 +29,7 @@ const cache = new Map<string, AudioPlayer>();
 
 function cacheKey(note: NoteSpec): string {
   if (note.drum) return `drum:${note.drum}`;
-  return `tone:${Math.round(note.frequency)}:${note.wave}`;
+  return `tone:${Math.round(note.frequency)}:${note.wave}:${note.pan ?? 0}`;
 }
 
 async function loadPlayer(note: NoteSpec): Promise<AudioPlayer> {
@@ -45,7 +45,7 @@ async function loadPlayer(note: NoteSpec): Promise<AudioPlayer> {
         ? toneToWavUri(180, 0.08)
         : note.drum === "hat"
           ? toneToWavUri(9000, 0.04)
-          : toneToWavUri(note.frequency, Math.max(0.05, note.duration));
+          : toneToWavUri(note.frequency, Math.max(0.05, note.duration), note.pan ?? 0);
 
   const player = createAudioPlayer({ uri });
   player.volume = note.gain;

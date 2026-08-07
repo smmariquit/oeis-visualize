@@ -14,6 +14,11 @@ import {
   SpaceGrotesk_700Bold,
   useFonts,
 } from "@expo-google-fonts/space-grotesk";
+import {
+  Literata_400Regular,
+  Literata_400Regular_Italic,
+  Literata_600SemiBold,
+} from "@expo-google-fonts/literata";
 import * as SplashScreen from "expo-splash-screen";
 import NotificationRouter from "../src/notifications/NotificationRouter";
 import ErrorBoundary from "../src/components/ErrorBoundary";
@@ -47,6 +52,10 @@ export default function RootLayout() {
   const [fontsLoaded] = useFonts({
     SpaceGrotesk_500Medium,
     SpaceGrotesk_700Bold,
+    // Book face for wiki article body text only; chrome stays Space Grotesk.
+    Literata_400Regular,
+    Literata_400Regular_Italic,
+    Literata_600SemiBold,
   });
 
   React.useEffect(() => {

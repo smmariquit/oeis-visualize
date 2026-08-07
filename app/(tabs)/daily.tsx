@@ -11,6 +11,20 @@ import {
   TextInput,
   View,
 } from "react-native";
+import Animated, {
+  Easing,
+  cancelAnimation,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withDelay,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
+import { playNotes } from "../../src/audio/engine";
+import { termTapNote } from "../../src/audio/mapTerm";
+import { isPrimeTerm } from "../../src/sequences/generators";
 import PlainText from "../../src/components/PlainText";
 import {
   CardSurface,
@@ -42,7 +56,9 @@ import {
   subscribeGameProgress,
 } from "../../src/game/progressStore";
 import AppIcon from "../../src/components/ui/AppIcon";
+import SquareConfetti from "../../src/components/SquareConfetti";
 import { isoDate } from "../../src/oeis/dayPick";
+import { motion } from "../../src/theme/motion";
 import { blurbFor } from "../../src/sequences/metadata";
 import { useThemeColors } from "../../src/theme";
 import {
@@ -64,6 +80,142 @@ function displayDate(date: string): string {
   });
 }
 
+type DailyStyles = ReturnType<typeof makeStyles>;
+
+/** Clue term tile: taps play its pitch; sulks on wrong guesses, parades on wins. */
+function ClueTile({
+  term,
+  index,
+  sulkTick,
+  paradeTick,
+  reducedMotion,
+  onPress,
+  styles,
+}: {
+  term: string;
+  index: number;
+  sulkTick: number;
+  paradeTick: number;
+  reducedMotion: boolean;
+  onPress: (term: string) => void;
+  styles: DailyStyles;
+}) {
+  const prime = isPrimeTerm(term);
+  const translateY = useSharedValue(0);
+  const rotate = useSharedValue(0);
+  const fade = useSharedValue(1);
+
+  // the sulk: droop, tilt, dim, recover; staggered 30ms per tile
+  React.useEffect(() => {
+    if (!sulkTick) return;
+    if (reducedMotion) {
+      fade.value = withSequence(
+        withTiming(motion.sulk.desaturate, motion.reducedFade),
+        withTiming(1, motion.reducedFade)
+      );
+      return;
+    }
+    const half = { duration: motion.sulk.duration / 2, easing: motion.sulk.easing };
+    const delay = index * motion.sulk.staggerMs;
+    const dip = (to: number, back: number) =>
+      withDelay(delay, withSequence(withTiming(to, half), withTiming(back, half)));
+    translateY.value = dip(motion.sulk.droopPx, 0);
+    rotate.value = dip(motion.sulk.rotateDeg, 0);
+    // ponytail: opacity dip stands in for desaturation; RN has no cross-platform saturate filter
+    fade.value = dip(motion.sulk.desaturate, 1);
+  }, [sulkTick, index, reducedMotion, translateY, rotate, fade]);
+
+  // the parade: hop wave in term order, 60ms stagger
+  React.useEffect(() => {
+    if (!paradeTick) return;
+    if (reducedMotion) {
+      fade.value = withSequence(
+        withTiming(0.35, motion.reducedFade),
+        withTiming(1, motion.reducedFade)
+      );
+      return;
+    }
+    translateY.value = withDelay(
+      index * motion.parade.staggerMs,
+      withSequence(
+        withTiming(-12, { duration: motion.parade.duration * 0.4, easing: motion.hop.easing }),
+        withTiming(0, { duration: motion.parade.duration * 0.6, easing: motion.hop.easing })
+      )
+    );
+  }, [paradeTick, index, reducedMotion, translateY, fade]);
+
+  const animStyle = useAnimatedStyle(() => ({
+    opacity: fade.value,
+    transform: [{ translateY: translateY.value }, { rotate: `${rotate.value}deg` }],
+  }));
+
+  return (
+    <Animated.View style={animStyle}>
+      <Pressable
+        style={({ pressed }) => [styles.term, pressed && styles.pressed]}
+        onPress={() => onPress(term)}
+        accessibilityRole="button"
+        accessibilityLabel={`Term ${term}${prime ? ", prime" : ""}, plays its pitch`}
+      >
+        <PlainText style={prime ? styles.termTextPrime : styles.termText}>{term}</PlainText>
+      </Pressable>
+    </Animated.View>
+  );
+}
+
+/** Guess slot: a landing guess squashes, then recovers with hop overshoot. */
+function GuessSlot({
+  value,
+  right,
+  landed,
+  reducedMotion,
+  styles,
+}: {
+  value: string | undefined;
+  right: boolean;
+  landed: boolean;
+  reducedMotion: boolean;
+  styles: DailyStyles;
+}) {
+  const scaleX = useSharedValue(1);
+  const scaleY = useSharedValue(1);
+  const fade = useSharedValue(1);
+
+  React.useEffect(() => {
+    if (!landed) return;
+    if (reducedMotion) {
+      fade.value = 0;
+      fade.value = withTiming(1, motion.reducedFade);
+      return;
+    }
+    scaleY.value = 0.8;
+    scaleX.value = 1.15;
+    scaleY.value = withTiming(1, motion.hop);
+    scaleX.value = withTiming(1, motion.hop);
+  }, [landed, reducedMotion, scaleX, scaleY, fade]);
+
+  const animStyle = useAnimatedStyle(() => ({
+    opacity: fade.value,
+    transform: [{ scaleX: scaleX.value }, { scaleY: scaleY.value }],
+  }));
+
+  return (
+    <Animated.View style={[styles.guessSlot, animStyle]}>
+      <PlainText
+        style={
+          value === undefined
+            ? styles.guessSlotEmpty
+            : right
+              ? styles.guessSlotRight
+              : styles.guessSlotWrong
+        }
+      >
+        {value ?? "·"}
+      </PlainText>
+    </Animated.View>
+  );
+}
+
 export default function DailyGameScreen() {
   const colors = useThemeColors();
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
@@ -78,6 +230,12 @@ export default function DailyGameScreen() {
     completed: boolean;
     won: boolean;
   } | null>(null);
+  // whimsy: which slot just landed, wrong-guess sulks, win parade, confetti rain
+  const [landing, setLanding] = React.useState(-1);
+  const [sulkTick, setSulkTick] = React.useState(0);
+  const [paradeTick, setParadeTick] = React.useState(0);
+  const [paradeActive, setParadeActive] = React.useState(false);
+  const [confetti, setConfetti] = React.useState(false);
 
   React.useSyncExternalStore(
     subscribeGameProgress,
@@ -128,10 +286,45 @@ export default function DailyGameScreen() {
   const hint = blurbFor(puzzle.anum) ?? "Look at how each term changes.";
   const showHint = play?.completed || guesses.length >= config.hintAfter;
   const stats = statsFor(gameProgress().plays, today);
+  // streak note: perfect squares get the weather
+  const nextStreak = stats.streak + 1;
+  const streakNote =
+    stats.streak > 0 && Number.isInteger(Math.sqrt(stats.streak))
+      ? `${stats.streak} is a perfect square. Enjoy the weather.`
+      : stats.streak > 0 && Number.isInteger(Math.sqrt(nextStreak))
+        ? `One more win makes ${nextStreak}, a perfect square.`
+        : null;
+
+  const playTerm = React.useCallback((term: string) => {
+    void playNotes([termTapNote(term)]);
+    if (Platform.OS !== "web") {
+      void Haptics.selectionAsync();
+    }
+  }, []);
+
+  // breathing "?" tile: scale 1 to 1.07, 2.4s loop; off under reduced motion
+  const reducedMotion = useReducedMotion();
+  const breath = useSharedValue(1);
+  React.useEffect(() => {
+    if (reducedMotion) {
+      breath.value = 1;
+      return;
+    }
+    breath.value = withRepeat(
+      withTiming(1.07, { duration: 1200, easing: Easing.inOut(Easing.sin) }),
+      -1,
+      true
+    );
+    return () => cancelAnimation(breath);
+  }, [reducedMotion, breath]);
+  const breathStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: breath.value }],
+  }));
 
   const resetAttempt = React.useCallback(() => {
     setInput("");
     setFeedback("");
+    setLanding(-1);
   }, []);
 
   const startPractice = React.useCallback(() => {
@@ -201,15 +394,49 @@ export default function DailyGameScreen() {
         });
       }
       setInput("");
+      setLanding(nextGuesses.length - 1);
+      const left = MAX_GUESSES - nextGuesses.length;
       setFeedback(
         won
-          ? `Solved in ${nextGuesses.length} ${nextGuesses.length === 1 ? "guess" : "guesses"}.`
+          ? `Solved in ${nextGuesses.length} ${nextGuesses.length === 1 ? "guess" : "guesses"}. The terms take a bow.`
           : completed
-            ? "Out of guesses. The answer is revealed below."
-            : `${MAX_GUESSES - nextGuesses.length} guesses left.`
+            ? `Out of guesses. It was ${challenge.answer}. Tomorrow is another sequence.`
+            : `Not ${guess}. The sequence looks away politely.\nStill hiding. ${left} ${left === 1 ? "guess" : "guesses"} left.`
       );
 
+      if (won) {
+        // the parade: tiles hop in term order while their pitches play as a run
+        setParadeTick((t) => t + 1);
+        challenge.clues.forEach((term, i) => {
+          setTimeout(() => void playNotes([termTapNote(term)]), i * 70);
+        });
+        if (!reducedMotion) {
+          setParadeActive(true);
+          const total =
+            motion.parade.duration +
+            motion.parade.staggerMs * (challenge.clues.length - 1);
+          setTimeout(() => setParadeActive(false), total);
+        }
+        if (!isPractice && !reducedMotion) {
+          // square-streak confetti; reduced motion keeps the streak note only
+          const streak = statsFor(gameProgress().plays, today).streak;
+          if (streak > 0 && Number.isInteger(Math.sqrt(streak))) {
+            setConfetti(true);
+            setTimeout(() => setConfetti(false), 4200);
+          }
+        }
+      } else {
+        // the sulk, plus a descending womp: 196Hz then 147Hz triangle
+        setSulkTick((t) => t + 1);
+        void playNotes([{ frequency: 196, duration: 0.18, gain: 0.3, wave: "triangle" }]);
+        setTimeout(
+          () => void playNotes([{ frequency: 147, duration: 0.18, gain: 0.3, wave: "triangle" }]),
+          180
+        );
+      }
+
       if (Platform.OS !== "web") {
+        // Error notification is the two-beat error haptic
         void Haptics.notificationAsync(
           won
             ? Haptics.NotificationFeedbackType.Success
@@ -217,7 +444,7 @@ export default function DailyGameScreen() {
         );
       }
     },
-    [activeDifficulty, challenge.answer, guesses, isPractice, play?.completed, puzzle.anum, today]
+    [activeDifficulty, challenge.answer, challenge.clues, guesses, isPractice, play?.completed, puzzle.anum, reducedMotion, today]
   );
 
   const shareResult = React.useCallback(async () => {
@@ -280,6 +507,11 @@ export default function DailyGameScreen() {
             <PlainText style={styles.statValue}>{`${stats.wins}/${stats.played}`}</PlainText>
           </CardSurface>
         </View>
+        {streakNote ? (
+          <PlainText style={styles.streakNote} testID="daily-streak-note">
+            {streakNote}
+          </PlainText>
+        ) : null}
         <PlainText style={styles.statsHint}>
           Solve any difficulty to keep the streak going, one day at a time.
           Progress is saved on this device only.
@@ -375,14 +607,39 @@ export default function DailyGameScreen() {
 
               <View style={styles.terms} testID="daily-terms">
                 {challenge.clues.map((term, index) => (
-                  <View key={`${term}-${index}`} style={styles.term}>
-                    <PlainText style={styles.termText}>{term}</PlainText>
-                  </View>
+                  <ClueTile
+                    key={`${term}-${index}`}
+                    term={term}
+                    index={index}
+                    sulkTick={sulkTick}
+                    paradeTick={paradeTick}
+                    reducedMotion={reducedMotion}
+                    onPress={playTerm}
+                    styles={styles}
+                  />
                 ))}
-                <View style={[styles.term, styles.questionTerm]}>
+                <Animated.View style={[styles.term, styles.questionTerm, breathStyle]}>
                   <PlainText style={styles.questionText}>?</PlainText>
-                </View>
+                </Animated.View>
               </View>
+
+              {guesses.length > 0 ? (
+                <View style={styles.guessSlots} testID="daily-guess-slots">
+                  {Array.from({ length: MAX_GUESSES }, (_, i) => {
+                    const g = guesses[i];
+                    return (
+                      <GuessSlot
+                        key={i}
+                        value={g}
+                        right={g !== undefined && isCorrectGuess(g, challenge.answer)}
+                        landed={i === landing}
+                        reducedMotion={reducedMotion}
+                        styles={styles}
+                      />
+                    );
+                  })}
+                </View>
+              ) : null}
 
               {showHint ? (
                 <View style={styles.hint} testID="daily-hint">
@@ -450,7 +707,7 @@ export default function DailyGameScreen() {
               ) : null}
             </CardSurface>
 
-            {play?.completed ? (
+            {play?.completed && !paradeActive ? (
               <View testID="daily-result">
                 <CardSurface style={styles.resultCard}>
                   <PlainText style={styles.resultTitle}>
@@ -502,6 +759,7 @@ export default function DailyGameScreen() {
         )}
         </ScrollView>
       </KeyboardAvoidingView>
+      {confetti ? <SquareConfetti /> : null}
     </View>
   );
 }
@@ -533,6 +791,13 @@ const makeStyles = (colors: any) => StyleSheet.create({
     fontSize: 12,
     lineHeight: 17,
     marginBottom: spacing.xl,
+  },
+  streakNote: {
+    color: colors.gold,
+    fontSize: 12,
+    fontWeight: "600",
+    lineHeight: 17,
+    marginBottom: spacing.xs,
   },
   statChip: {
     flex: 1,
@@ -669,6 +934,49 @@ const makeStyles = (colors: any) => StyleSheet.create({
   termText: {
     color: colors.text,
     fontSize: 17,
+    fontWeight: "700",
+    fontVariant: ["tabular-nums"],
+  },
+  termTextPrime: {
+    color: colors.candySky,
+    fontSize: 17,
+    fontWeight: "700",
+    fontVariant: ["tabular-nums"],
+    textShadowColor: colors.primeGlow,
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
+  },
+  guessSlots: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    marginTop: -spacing.sm,
+    marginBottom: spacing.lg,
+  },
+  guessSlot: {
+    minWidth: 44,
+    minHeight: 32,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radii.sm,
+    borderWidth: 1,
+    borderStyle: "dashed",
+    borderColor: colors.borderSubtle,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  guessSlotEmpty: {
+    color: colors.textMuted,
+    fontSize: 15,
+  },
+  guessSlotWrong: {
+    color: colors.accentAlt,
+    fontSize: 15,
+    fontWeight: "700",
+    textDecorationLine: "line-through",
+    fontVariant: ["tabular-nums"],
+  },
+  guessSlotRight: {
+    color: colors.primary,
+    fontSize: 15,
     fontWeight: "700",
     fontVariant: ["tabular-nums"],
   },

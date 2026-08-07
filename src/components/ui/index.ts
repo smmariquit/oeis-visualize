@@ -8,6 +8,7 @@ export { default as BulletRow } from "./BulletRow";
 export { cardBorderStyles, default as CardSurface } from "./CardSurface";
 export { default as CenteredState } from "./CenteredState";
 export { default as ContentColumn } from "./ContentColumn";
+export { default as CountingLoader } from "./CountingLoader";
 export { default as ExternalLink } from "./ExternalLink";
 export { default as InfoSectionBlock } from "./InfoSectionBlock";
 export { default as LoadingSpinner } from "./LoadingSpinner";

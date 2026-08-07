@@ -85,7 +85,7 @@ export default function PillButton({
         ) : null}
         {textContent ? (
           typeof children === "string" || label ? (
-            <Text style={styles.labelStyles[variant]}>{textContent}</Text>
+            <Text style={[styles.labelStyles[variant], styles.labelShrink]}>{textContent}</Text>
           ) : (
             children
           )
@@ -201,6 +201,9 @@ const makeStyles = (colors: any) => ({
     },
     disabled: {
       opacity: 0.45,
+    },
+    labelShrink: {
+      flexShrink: 1,
     },
     flex: {
       flex: 1,

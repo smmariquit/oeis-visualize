@@ -11,6 +11,7 @@ import VizPreview from "./VizPreview";
 import { AnumBadge, BodyText, CardSurface, PressableCard, AppIcon, LoadingSpinner } from "./ui";
 import SequenceName from "./SequenceName";
 import MetaChips from "./MetaChips";
+import TermsLine from "./TermsLine";
 
 const PREVIEW_W = Platform.OS === "web" ? 120 : 80;
 const PREVIEW_H = Platform.OS === "web" ? 72 : 52;
@@ -47,7 +48,7 @@ function ResultRow({ sequence, showPreview = true, index = 0 }: Props) {
           <SequenceName name={sequence.name} style={styles.name} numberOfLines={2} />
           {sequence.terms && (
             <BodyText variant="caption" style={styles.terms} numberOfLines={1}>
-              {sequence.terms.slice(0, 12).join(", ")}...
+              <TermsLine terms={sequence.terms} max={12} />
             </BodyText>
           )}
           <MetaChips anum={sequence.anum} name={sequence.name} compact />

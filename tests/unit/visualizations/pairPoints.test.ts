@@ -1,4 +1,4 @@
-import { pairPoints } from "../../../src/visualizations/pairPoints";
+import { pairPoints, ratioGuideY } from "../../../src/visualizations/pairPoints";
 
 describe("pairPoints", () => {
   const A = ["1", "2", "4", "8"];
@@ -26,5 +26,19 @@ describe("pairPoints", () => {
   it("truncates to the shorter sequence and handles empty", () => {
     expect(pairPoints(A, B.slice(0, 2), "phase", 100, 100, 10)).toHaveLength(2);
     expect(pairPoints([], B, "phase", 100, 100, 10)).toEqual([]);
+  });
+
+  it("ratio guide lands inside the box for an in-range limit", () => {
+    // a/b ratios span [~1/3.375, 1]; guide at 0.5 sits inside the plot
+    const y = ratioGuideY(A, B, 0.5, 100, 10);
+    expect(y).not.toBeNull();
+    expect(y!).toBeGreaterThanOrEqual(10);
+    expect(y!).toBeLessThanOrEqual(90);
+  });
+
+  it("ratio guide is null off-scale or without data", () => {
+    expect(ratioGuideY(A, B, 1e6, 100, 10)).toBeNull();
+    expect(ratioGuideY([], [], 1, 100, 10)).toBeNull();
+    expect(ratioGuideY(A, B, 0, 100, 10)).toBeNull();
   });
 });

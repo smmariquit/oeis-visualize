@@ -1,11 +1,27 @@
 import {
   fibonacci,
+  isPrimeTerm,
   recaman,
   collatzLength,
   collatzSequence,
   pascalRow,
   primes,
 } from "../../../src/sequences/generators";
+
+describe("isPrimeTerm", () => {
+  it("flags prime digit strings", () => {
+    expect(isPrimeTerm("2")).toBe(true);
+    expect(isPrimeTerm("97")).toBe(true);
+    expect(isPrimeTerm("1")).toBe(false);
+    expect(isPrimeTerm("100")).toBe(false);
+    expect(isPrimeTerm("-7")).toBe(false);
+  });
+
+  it("skips non-integers and huge terms past the 1e9 cap", () => {
+    expect(isPrimeTerm("abc")).toBe(false);
+    expect(isPrimeTerm("354224848179261915075")).toBe(false);
+  });
+});
 
 describe("fibonacci", () => {
   it("starts with 0, 1", () => {

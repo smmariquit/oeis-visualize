@@ -11,6 +11,7 @@ import PlainText from "./PlainText";
 import SequenceName from "./SequenceName";
 import { containsLatexDelimiters } from "../math/latexDelimiters";
 import VizPreview from "./VizPreview";
+import RecamanSkeleton from "./RecamanSkeleton";
 import { AnumBadge, CardSurface, PressableCard, cardBorderStyles } from "./ui";
 import MetaChips from "./MetaChips";
 import { radii, spacing } from "../theme/tokens";
@@ -21,9 +22,11 @@ interface Props {
   sequence: OEISSequence;
   index: number;
   cardWidth: number;
+  /** still waiting on data: preview area shows the Recamán skeleton shimmer */
+  loading?: boolean;
 }
 
-function SequenceCard({ sequence, cardWidth }: Props) {
+function SequenceCard({ sequence, cardWidth, loading }: Props) {
   const colors = useThemeColors();
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
   const handlePress = useCallback(() => {
@@ -41,14 +44,18 @@ function SequenceCard({ sequence, cardWidth }: Props) {
           style={[styles.previewContainer, { width: cardWidth }]}
           importantForAccessibility="no-hide-descendants"
         >
-          <ErrorBoundary fallbackText={`Preview: ${sequence.name}`}>
-            <VizPreview
-              sequence={sequence}
-              width={cardWidth}
-              height={PREVIEW_H}
-              preview
-            />
-          </ErrorBoundary>
+          {loading ? (
+            <RecamanSkeleton width={cardWidth} height={PREVIEW_H} />
+          ) : (
+            <ErrorBoundary fallbackText={`Preview: ${sequence.name}`}>
+              <VizPreview
+                sequence={sequence}
+                width={cardWidth}
+                height={PREVIEW_H}
+                preview
+              />
+            </ErrorBoundary>
+          )}
           <View style={[styles.previewOverlay, cardBorderStyles.bottom]} />
         </View>
         <View style={styles.info}>
